@@ -1,0 +1,55 @@
+object0:
+  name: "gelatin_box"
+  file_path: "_assets/usd/gelatin_box.usd"
+  
+  
+  scale: 1
+
+object1:
+  name: "banana"
+  file_path: "_assets/usd/banana.usd"
+  
+  
+  scale: 1
+
+object2:
+  name: "bottle"
+  file_path: "_assets/usd/bottle.usd"
+  
+  
+  scale: 1
+
+#object3:
+#  name: "bowl"
+#  file_path: "_assets/usd/bowl.usd"
+#  position: [0, 1, 1]
+# 
+#  scale: 0.4
+
+object4:
+  name: "cup"
+  file_path: "_assets/usd/cup.usd"
+  
+  
+  scale: 1
+
+object5:
+  name: "pipe"
+  file_path: "_assets/usd/pipe.usd"
+  
+  
+  scale: 1
+
+object6:
+  name: "pipe2"
+  file_path: "_assets/usd/pipe2.usd"
+  
+  
+  scale: 1
+
+object7:
+  name: "motor"
+  file_path: "_assets/usd/motor.usd"
+  
+  
+  scale: 1
