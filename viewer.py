@@ -23,9 +23,7 @@ import omni.replicator.core as rep
 from omni.usd import get_context
 from omni.isaac.dynamic_control import _dynamic_control as dc
 from geometry import DynamicObject
-from controller import Controller
 from scene import Scene
-import constants
 import os
 
 
@@ -55,7 +53,6 @@ class Viewer(object):
         self.names = set(scene.names)
         self.base_scene = scene
         self.scenes: List[Scene] = [scene]
-
         self.check_flag: bool = False  
         self.step_time: float = 0.0
         self.plane_z: float = 0.0
@@ -63,7 +60,8 @@ class Viewer(object):
         self.min_x: float = 0.0
         self.max_y: float = 0.0
         self.min_y: float = 0.0        
-        self.mode = mode
+        self.mode: str = mode
+        self.objects = set()
 
         self.lookup: Dict = {}
         
@@ -108,7 +106,6 @@ class Viewer(object):
         self.world.scene.add_default_ground_plane()
         self.world.scene.add_default_ground_plane()
 
-        self.objects = []
         table = DynamicObject(prim_path=self.scenes[0].work_path + "/" + "table",
                               name="table_0",
                               collision=True,
@@ -146,7 +143,7 @@ class Viewer(object):
                             translation=translation,
                             scale=scale)
         self.lookup[name] = scale
-        self.objects.append(obj)
+        self.objects.add(obj)
         self.world.scene.add(obj)
 
 
@@ -193,21 +190,21 @@ class Viewer(object):
             print(factors, _max)
             if _max in [0.1, 1]:
                 _object = DynamicObject(prim_path=self.scenes[0].work_path + "/" + name,
-                                       name=name + "_0",
+                                       name=name,
                                        #color=np.random.rand(1, 3),
                                        translation=translation,
                                        scale = [1.0, 1.0, 1.0])
                 self.lookup[name] = [1.0, 1.0, 1.0]
             elif _max > 1:
                 _object = DynamicObject(prim_path=self.scenes[0].work_path + "/" + name,
-                                       name=name + "_0",
+                                       name=name,
                                        #color=np.random.rand(1, 3),
                                        translation=translation,
                                        scale = [1 / _max, 1 / _max, 1 / _max])
                 self.lookup[name] = [1 / _max, 1 / _max, 1 / _max]
             else:
                 _object = DynamicObject(prim_path=self.scenes[0].work_path + "/" + name,
-                                   name=name + "_0",
+                                   name=name,
                                    #color=np.random.rand(1, 3),
                                    translation=translation,
                                    scale = [5.0, 5.0, 5.0])
@@ -217,51 +214,39 @@ class Viewer(object):
             self.world.scene.add(_object)
         return
     
-    def save_scene(self, count):
-        from omni.usd import get_world_transform_matrix
-        from pxr import Gf
-
+    def save_scene(self, count, yaml_path):
         import yaml
 
         print("Saving Scene")
         print("==========================================")
-        stage: Usd.stage = get_current_stage()
-        prims: List[Usd.Prim] = [x for x in stage.Traverse() if x.IsA(UsdGeom.Mesh)]
         scene_dict = {}
 
-        for index, prim in enumerate(prims):
+        scene_dict["table"] = {}
+        scene_dict["table"]["name"] = "table"
+        scene_dict["table"]["file_path"] = "/share/assets/table/table.obj"
+        scene_dict["table"]["position"] = np.array([0.0, 0.0, 0.0]).tolist()
+        scene_dict["table"]["orientation"] = np.array([0.0, 0.0, 0.0, 0.0]).tolist()
+        scene_dict["table"]["scale"] = np.array([0.01, 0.01, 0.01]).tolist()
+        print(scene_dict)
+    
+        for index, _object in enumerate(self.objects):
+            name = _object.name
+            number = name.strip("object")
+            print(index, _object, name)
+            file_path = "/share/assets/{}/{}.usd".format(number, number)
+            scene_dict["object{}".format(index)] = {}
+            file_path = "/share/assets/{}/{}.usd".format(number, number)
+            translation, orientation = _object.get_world_pose()
+            scene_dict["object{}".format(index)]["name"] = name
+            scene_dict["object{}".format(index)]["file_path"] = file_path
+            scene_dict["object{}".format(index)]["position"] = translation.tolist()
+            scene_dict["object{}".format(index)]["orientation"] = orientation.tolist()
+            scene_dict["object{}".format(index)]["scale"] = np.array(self.lookup[name]).tolist()
 
-
-            name = str(prim.GetPrimPath()).split("/")[3]
-            if name == "table":
-                location: Gf.Matrix4d = get_world_transform_matrix(prim)
-                translation = location.ExtractTranslation()
-                orientation = location.ExtractRotationQuat()
-                print(orientation)
-                scene_dict["object{}".format(index)] = {}
-                file_path = "/share/assets/table/table.usd"
-                scene_dict["object{}".format(index)]["name"] = name
-                scene_dict["object{}".format(index)]["file_path"] = file_path
-                scene_dict["object{}".format(index)]["position"] = np.array(translation).tolist()
-                scene_dict["object{}".format(index)]["orientation"] = list(orientation)
-                scene_dict["object{}".format(index)]["scale"] = np.array(self.lookup[name]).tolist()
-            elif name != "Enviroment":
-                location: Gf.Matrix4d = get_world_transform_matrix(prim)
-                translation = location.ExtractTranslation()
-                orientation = location.ExtractRotationQuat()
-                print(orientation)
-                number = name.lstrip("object")
-                scene_dict["object{}".format(index)] = {}
-                file_path = "/share/assets/{}/{}.usd".format(number, number)
-                scene_dict["object{}".format(index)]["name"] = name
-                scene_dict["object{}".format(index)]["file_path"] = file_path
-                scene_dict["object{}".format(index)]["position"] = np.array(translation).tolist()
-                scene_dict["object{}".format(index)]["orientation"] = list(orientation)
-                scene_dict["object{}".format(index)]["scale"] = np.array(self.lookup[name]).tolist()
-
+    
 
         os.makedirs("out/scenes", exist_ok=True)
-        with open(f"out/yaml/{count}.yaml", "w") as f:
+        with open(f"{yaml_path}/{count}.yaml", "w") as f:
             yaml.dump(scene_dict, f)
 
     def physics_step(self, step_size: int) -> None:
@@ -279,18 +264,21 @@ class Viewer(object):
         """Removes objects fallen from tabletop from scene
         """
         count = 0
-        for object in self.objects:
+        for index, object in enumerate(self.objects):
             
             pose = object.get_world_pose()
             if pose[0][-1] < self.plane_z * 0.5:
                 prims_utils.delete_prim(object.prim_path)
                 count += 1
+                self.objects.remove(object)
             elif pose[0][0] < self.min_x or pose[0][0] > self.max_x:
                 prims_utils.delete_prim(object.prim_path)
                 count += 1
+                self.objects.remove(object)
             elif pose[0][1] < self.min_y or pose[0][1] > self.max_y:
                 prims_utils.delete_prim(object.prim_path)
                 count += 1
+                self.objects.remove(object)
         print("Deleted {} objects for exceeding table limits".format(count))
         print("==========================================")
 

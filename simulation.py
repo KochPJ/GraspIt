@@ -15,6 +15,8 @@ def parse_args():
     parser.add_argument("--out_dir", default="datasets")
     parser.add_argument("--save_scene", action="store_true")
     parser.add_argument("--num_scenes", default=5, help="", type=int)
+    parser.add_argument("--model", type=str, default="")
+    parser.add_argument("--container_index", required=True)
 
     return parser.parse_args()
 
@@ -41,7 +43,6 @@ from pxr import Usd, UsdGeom, Sdf
 from utils import get_current_stage
 from typing import List, Tuple
 import os
-import cv2
 import imageio
 import numpy as np
 from shutil import move, rmtree
@@ -123,15 +124,16 @@ def custom_main(object_usd_path: str, label: str):
     return viewer, world
 
 
-def main():
+def main(scene_path, yaml_path):
     world = World()
     root_path = "/World/Workstation"
     print(get_assets_root_path())
     with open(args.config, "r") as f:
         data_dict = safe_load(f)
 
+    num_objects = np.random.randint(5, 20)
     # TODO: Create random object loader
-    scene = Scene.from_dict(data_dict, root_path, num_objects=args.num_objects)
+    scene = Scene.from_dict(data_dict, root_path, num_objects=num_objects)
     viewer = Viewer(
         world=world, scene=scene, root_path=root_path, mode=args.mode
     )
@@ -155,9 +157,9 @@ def main():
             break
     # Simulation exit and clean-up
     stage = get_current_stage()
-    stage.Export(f"out/scenes/{COUNT}.usd")
+    stage.Export(f"{scene_path}/{COUNT}.usd")
     if args.save_scene:
-        viewer.save_scene(COUNT)
+        viewer.save_scene(COUNT, yaml_path)
         print("======= exiting Simulation =========")
     return viewer, world
 
@@ -191,7 +193,8 @@ def clean_data_set(args):
             move(os.path.join(path, mask), os.path.join("dataset", scene, f"frame_{index}"))
             move(os.path.join(path, mask_label), os.path.join("dataset", scene, f"frame_{index}"))
         move(os.path.join("out", "scenes", "{}.usd".format(scene_index)), os.path.join("dataset", scene, "scene.usd"))
-        move(os.path.join("out", "yaml", "{}.yaml".format(scene_index)), os.path.join("dataset", scene, "scene.yaml"))
+        if args.save_scene:
+            move(os.path.join("out", "yaml", "{}.yaml".format(scene_index)), os.path.join("dataset", scene, "scene.yaml"))
             
             
 def add_plane(
@@ -285,7 +288,7 @@ def generate_custom(args, path):
 
     writer = rep.WriterRegistry.get("BasicWriter")
     writer.initialize(
-        output_dir=f"/home/sersandr/synthData/omniverse/temp/{OUTDIR}",
+        output_dir= f"{os.path.join(os.getcwd(), 'temp', OUTDIR)}",
         rgb=True
     )
     render_product = rep.create.render_product(camera, (512, 512))
@@ -307,21 +310,20 @@ def generate_custom(args, path):
                     ])
     
     rep.orchestrator.run()
-    simulation_app.update() 
-
+    simulation_app.update()
     
 
-def generate_data(args, path):
+def generate_data(args, scene_path, path, temp_path):
     print(f"====== generating synthetic dataset with {args.num_views} views =======")
 
     curr_date = datetime.today().strftime('%Y%m%d')
     scene_index = path.split(".")[0]
     OUTDIR = "{}_{}".format(scene_index, curr_date)
 
-    open_stage(os.path.join("out/scenes", path))
+    open_stage(os.path.join(scene_path, path))
     stage = get_current_stage()
 
-    for i in range(100):
+    for i in range(150):
         if i % 10 == 0:
             print(f"updating SimulationApp: {i}")
         simulation_app.update()
@@ -352,7 +354,7 @@ def generate_data(args, path):
     
     writer = rep.WriterRegistry.get("BasicWriter")
     writer.initialize(
-        output_dir=f"/home/sersandr/synthData/omniverse/temp/{OUTDIR}",
+        output_dir=f"/omniverse/{temp_path}/{OUTDIR}",
         rgb=True,
         semantic_segmentation=True,
         distance_to_camera=True,
@@ -361,8 +363,8 @@ def generate_data(args, path):
     render_product = rep.create.render_product(camera, (1920, 1080))
     writer.attach([render_product])
     
-
-    with rep.trigger.on_frame(max_execs=args.num_views, rt_subframes=10):
+    num_views = np.random.randint(20, 60)
+    with rep.trigger.on_frame(max_execs=num_views, rt_subframes=15):
         with table:
             rep.modify.semantics([('class', 'table')])
         with camera:
@@ -382,18 +384,22 @@ def generate_data(args, path):
     simulation_app.update()        
 
 if __name__ == "__main__":
-    if os.path.exists("out/scenes"):
-        rmtree("out/scenes")
-    if os.path.exists("out/yaml"):
-        rmtree("out/yaml")
-    if os.path.exists("temp"):
-        rmtree("temp")
-    os.makedirs("out/scenes", exist_ok=True)
-    os.makedirs("out/yaml", exist_ok=True)
-    os.makedirs("temp", exist_ok=True)
+    container_index = args.container_index
+    scene_path = f"out/scenes/{container_index}_scenes"
+    yaml_path = f"out/yaml/{container_index}_yaml"
+    temp_path = f"temp/{container_index}_temp"
+    if os.path.exists(scene_path):
+        rmtree(scene_path)
+    if os.path.exists(yaml_path):
+        rmtree(yaml_path)
+    if os.path.exists(temp_path):
+        rmtree(temp_path)
+    os.makedirs(scene_path, exist_ok=True)
+    os.makedirs(yaml_path, exist_ok=True)
+    os.makedirs(temp_path, exist_ok=True)
     if args.mode == "custom":
         try:
-            model = "bottle"
+            model = args.model
             path = f"ModelNet40/{model}_converted"
             for folder in os.listdir(os.path.join(path,)):
                 for obj in os.listdir(os.path.join(path, folder)):
@@ -421,11 +427,11 @@ if __name__ == "__main__":
     else:
         try:
             for _ in range(args.num_scenes):
-                viewer, world = main()
+                viewer, world = main(scene_path, yaml_path)
                 COUNT += 1
                 reset_scene(args, viewer, world)
-            for path in os.listdir("out/scenes"):
-                generate_data(args, path)
+            for path in os.listdir(scene_path):
+                generate_data(args, scene_path, path, temp_path)
                 while rep.orchestrator.get_is_started():
                     simulation_app.update()
             print("============================================")
@@ -435,7 +441,6 @@ if __name__ == "__main__":
                 simulation_app.update()
             for _ in range(100):
                 simulation_app.update()
-            clean_data_set(args)
         except Exception as e:
             pass
             print(e)
