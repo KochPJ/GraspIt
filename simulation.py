@@ -434,9 +434,6 @@ if __name__ == "__main__":
                 generate_data(args, scene_path, path, temp_path)
                 while rep.orchestrator.get_is_started():
                     simulation_app.update()
-            print("============================================")
-            print("finishing datageneration, cleaning directory")
-            print("============================================")
             while rep.orchestrator.get_is_started():
                 simulation_app.update()
             for _ in range(100):

@@ -52,8 +52,8 @@ docker run --gpus device=$gpu_index  -e "ACCEPT_EULA=${accept_eula}" --rm --netw
 	-v ~/docker/isaac-sim/config:/root/.nvidia-omniverse/config:rw \
 	-v ~/docker/isaac-sim/data:/root/.local/share/ov/data:rw \
 	-v ~/docker/isaac-sim/documents:/root/Documents:rw \
-	-v ~/synthData/omniverse:/omniverse:rw \
-	-v /share:/share:rw \
+	-v ~/OptiSim:/omniverse:rw \
+	-v /home/sersandr/share:/share:rw \
 	scene_gen:latest
 
 echo "Isaac Sim container run completed!"
