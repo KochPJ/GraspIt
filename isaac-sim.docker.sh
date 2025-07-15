@@ -4,6 +4,7 @@ set -e
 
 gpu_index=$1
 container_index=$2
+num_scenes=$3
 
 echo "Setting variables..."
 # Set to desired Nucleus
@@ -43,6 +44,7 @@ docker run --gpus device=$gpu_index  -e "ACCEPT_EULA=${accept_eula}" --rm --netw
 	-e "OMNI_SERVER=${omni_server}" \
     -e "PRIVACY_CONSENT=${privacy_consent}" -e "PRIVACY_USERID=${privacy_userid}" \
 	-e CONTAINER_INDEX=$container_index \
+	-e NUM_SCENES=$num_scenes \
     -v ~/docker/isaac-sim/kit/cache/Kit:/isaac-sim/kit/cache:rw \
 	-v ~/docker/isaac-sim/cache/ov:/root/.cache/ov:rw \
 	-v ~/docker/isaac-sim/cache/pip:/root/.cache/pip:rw \

@@ -15,21 +15,52 @@ import argparse
 from typing import *
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Commandlinetool for large scale scene generation")
-    parser.add_argument("--num_scenes", default=500, type=int)
-
-    return parser.parse_args()
-
-
 def main() -> None:
     threads = {}
     container_count = 0
-    args = parse_args()
-    num_scenes = args.num_scenes
-    batches = num_scenes // 2
-    num_threads = get_gpu_count()
-    used_gpus = set()
+
+    while True:
+        print("Initializing multi-gpu scene-sampler")
+        while True:
+            print("Number of gpus currently available for sampling:")
+            print_gpus()
+            num_threads = int(input("Enter number of gpus for use:"))
+            if num_threads > get_gpu_count():
+                print("Invalid option, number of selected gpus > number of available gpus!")
+            else:
+                print(f"Selected {num_threads} gpus for scene-sampling")
+                used_gpus = set([i for i in range(num_threads, get_gpu_count())])
+                break
+
+        batch_size = input("Enter batchsize for scene sampling (default: 50):")
+        if batch_size == "":
+            batch_size = 50
+        else:
+            batch_size = int(batch_size)
+        
+        num_scenes = input("Enter number of scenes to be sampled (default: 500):")
+        if num_scenes == "":
+            num_scenes = 500
+        else:
+            num_scenes = int(num_scenes)
+        
+        exces_batch = num_scenes % batch_size
+        num_scenes -= num_scenes % batch_size
+        batches = num_scenes // batch_size
+
+        print(f"Finished initialization with {num_threads} gpus, {num_scenes} scenes and batchsize of {batch_size}, leading to exces batch of size {exces_batch}")
+        proceed = input("Run scene sampler with selected config? [Y/N]").lower()
+        if proceed == "y":
+            break
+
+    if exces_batch > 0:
+        gpu = query_gpu(80.0, used_gpus)
+        thread = threading.Thread(target=start_container, args=(gpu, container_count, exces_batch))
+        threads[container_count] = (thread, gpu)
+        thread.start()
+        container_count += 1
+        used_gpus.add(gpu)
+
 
     while batches > 0:
         if len(threads.keys()) < num_threads:
@@ -37,7 +68,7 @@ def main() -> None:
             if gpu is False:
                 continue
             print("Selecting gpu {} for thread with id {}".format(gpu, container_count))
-            thread = threading.Thread(target=start_container, args=(gpu, container_count))
+            thread = threading.Thread(target=start_container, args=(gpu, container_count, batch_size))
             threads[container_count] = (thread, gpu)
             thread.start()
             print(used_gpus, threads)
@@ -60,7 +91,6 @@ def main() -> None:
         thread.join()
     
     clean_dataset()
-
 
 
 def clean_dataset():
@@ -115,7 +145,7 @@ def clean_dataset():
     for file in glob.glob("out/scenes/*"):
         shutil.rmtree(file)
     for file in glob.glob("out/yaml/*"):
-        shutil.rmtree(filetouch)
+        shutil.rmtree(file)
         
 
 def echo(id):
@@ -123,9 +153,17 @@ def echo(id):
     sleep(5)
 
 
-def start_container(gpu, id):
+def start_container(gpu, id, num_scenes):
     os.system(f"echo 'Starting Isaac-Sim container: id {id}'")
-    os.system(f"./isaac-sim.docker.sh {gpu} {id}")
+    os.system(f"./isaac-sim.docker.sh {gpu} {id} {num_scenes}")
+
+def print_gpus():
+    pynvml.nvmlInit()
+    deviceCount = pynvml.nvmlDeviceGetCount()
+    for _ in range(deviceCount):
+        handle = pynvml.nvmlDeviceGetHandleByIndex(_)
+        name = pynvml.nvmlDeviceGetName(handle)
+        print(_, name)
 
 
 def query_gpu(threshold, used_gpus) -> int:
