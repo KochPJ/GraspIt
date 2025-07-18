@@ -27,7 +27,7 @@ Prior to running the scene sampler assets (and optionally textures) must be prov
 └── textures
     ├── texture1.jpg
     ...
-
+Not specifying texture files is not a problem for the Scene Sampler, but it does mean that the object textures are not randomized during data generation.
 ````
 
 After data generation, the dataset will be in the following format:
