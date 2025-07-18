@@ -5,6 +5,7 @@ set -e
 gpu_index=$1
 container_index=$2
 num_scenes=$3
+asset_path=$4
 
 echo "Setting variables..."
 # Set to desired Nucleus
@@ -55,7 +56,7 @@ docker run --gpus device=$gpu_index  -e "ACCEPT_EULA=${accept_eula}" --rm --netw
 	-v ~/docker/isaac-sim/data:/root/.local/share/ov/data:rw \
 	-v ~/docker/isaac-sim/documents:/root/Documents:rw \
 	-v ~/OptiSim/scene_sampler:/omniverse:rw \
-	-v /home/sersandr/share:/share:rw \
+	-v $asset_path:/share:rw \
 	scene_gen:latest
 
 echo "Isaac Sim container run completed!"

@@ -31,6 +31,16 @@ def main() -> None:
                 print(f"Selected {num_threads} gpus for scene-sampling")
                 used_gpus = set([i for i in range(num_threads, get_gpu_count())])
                 break
+        
+        
+        asset_path = input("Enter path to assets to be loaded during scene generation (default: /share/):")
+        if os.path.exists(asset_path):
+            print(asset_path)
+        elif asset_path == "":
+            asset_path = "/share/"
+        else:
+            print("Not a valid asset path, defaulting to /share/")
+            asset_path = "/share/"
 
         batch_size = input("Enter batchsize for scene sampling (default: 50):")
         if batch_size == "":
@@ -68,7 +78,7 @@ def main() -> None:
             if gpu is False:
                 continue
             print("Selecting gpu {} for thread with id {}".format(gpu, container_count))
-            thread = threading.Thread(target=start_container, args=(gpu, container_count, batch_size))
+            thread = threading.Thread(target=start_container, args=(gpu, container_count, batch_size, asset_path))
             threads[container_count] = (thread, gpu)
             thread.start()
             print(used_gpus, threads)
@@ -153,9 +163,9 @@ def echo(id):
     sleep(5)
 
 
-def start_container(gpu, id, num_scenes):
+def start_container(gpu, id, num_scenes, asset_path):
     os.system(f"echo 'Starting Isaac-Sim container: id {id}'")
-    os.system(f"./isaac-sim.docker.sh {gpu} {id} {num_scenes}")
+    os.system(f"./isaac-sim.docker.sh {gpu} {id} {num_scenes} {asset_path}")
 
 def print_gpus():
     pynvml.nvmlInit()
