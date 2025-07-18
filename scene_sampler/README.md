@@ -30,7 +30,8 @@ Prior to running the scene sampler assets (and optionally textures) must be prov
     ├── texture1.jpg
     ...
 ````
-Not specifying texture files is not a problem for the Scene Sampler, but it does mean that the object textures are not randomized during data generation.
+Not specifying texture files is not a problem for the Scene Sampler, but it does mean that the object textures are not randomized during data generation. The *configs/abc_objects.yaml* provides a example config for one slice of the [ABC-Dataset](https://deep-geometry.github.io/abc-dataset/). Conversion from .obj to .usd file format was done using Isaac-Sims [Asset Converter](https://docs.omniverse.nvidia.com/extensions/latest/ext_asset-converter.html). 
+
 After data generation, the dataset will be in the following format:
 ````
 /dataset
