@@ -23,6 +23,7 @@ Prior to running the scene sampler assets (and optionally textures) must be prov
 └── assets
     ├── object_name
     │   ├── object_name.usd
+    ...
 └── textures
     ├── texture1.jpg
     ...
