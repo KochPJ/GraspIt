@@ -10,6 +10,8 @@ docker build -t scene_sampler .
 ````
 Though release versions of the Isaac-Sim docker require a GPU driver version of 535.129.03, all tests and deployments were done with CUDA 12.2 and driver version 535.54.03. For further details on installing newer versions of the Isaac-Sim docker, please refer to the [documentation](https://docs.isaacsim.omniverse.nvidia.com/latest/installation/install_container.html)
 
+The scene sampler requires [python](https://www.python.org/downloads/) >= 3.10.12 and [pip](https://pip.pypa.io/en/stable/installation/) >=22.0.2
+
 It is recommended to run the scene sampler in a virtual environment. All dependencies are listed in requirements.txt:
 ````
 python3 -m venv optisim
