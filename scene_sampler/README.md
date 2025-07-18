@@ -16,4 +16,17 @@ python3 -m venv optisim
 source optisim/bin/activate
 pip install -r requirements.txt
 ````
+## Usage
 
+
+After data generation, the dataset will be in the following format:
+````
+/dataset
+└── scene_*
+    ├── frame_*
+    │   ├── camera_params_*.json
+    │   ├── depth.png
+    │   ├── rgb_*.png
+    │   ├── semantic_segmentation_*.png
+    │   └── semantic_segmentation_labels_*.json
+````
