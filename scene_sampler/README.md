@@ -17,3 +17,13 @@ source optisim/bin/activate
 pip install -r requirements.txt
 ````
 
+````
+.
+└── scene_0
+    ├── frame_0
+    │   ├── camera_params_0000.json
+    │   ├── depth.png
+    │   ├── rgb_0000.png
+    │   ├── semantic_segmentation_0000.png
+    │   └── semantic_segmentation_labels_0000.json
+````
