@@ -17,7 +17,17 @@ source optisim/bin/activate
 pip install -r requirements.txt
 ````
 ## Usage
+Prior to running the scene sampler assets (and optionally textures) must be provided in .usd format. The filepath can be specified during execution of the scene sampler. The directory for assets and textures should be structured like:
+````
+/assets_root_path
+└── assets
+    ├── object_name
+    │   ├── object_name.usd
+└── textures
+    ├── texture1.jpg
+    ...
 
+````
 
 After data generation, the dataset will be in the following format:
 ````
@@ -29,4 +39,5 @@ After data generation, the dataset will be in the following format:
     │   ├── rgb_*.png
     │   ├── semantic_segmentation_*.png
     │   └── semantic_segmentation_labels_*.json
+    ...
 ````
