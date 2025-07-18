@@ -20,11 +20,11 @@ pip install -r requirements.txt
 Prior to running the scene sampler assets (and optionally textures) must be provided in .usd format. The filepath can be specified during execution of the scene sampler. The directory for assets and textures should be structured like:
 ````
 /assets_root_path
-└── assets
-    ├── object_name
+└── /assets
+    ├── /object_name
     │   ├── object_name.usd
     ...
-└── textures
+└── /textures
     ├── texture1.jpg
     ...
 ````
@@ -32,8 +32,8 @@ Not specifying texture files is not a problem for the Scene Sampler, but it does
 After data generation, the dataset will be in the following format:
 ````
 /dataset
-└── scene_*
-    ├── frame_*
+└── /scene_*
+    ├── /frame_*
     │   ├── camera_params_*.json
     │   ├── depth.png
     │   ├── rgb_*.png
