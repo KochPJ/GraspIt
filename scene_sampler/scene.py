@@ -40,12 +40,13 @@ class Scene():
         table_usd = get_table_usd()
         _ = create_prim(prim_path=work_path + "/" + "table", usd_path=table_usd, scale=[0.01])
 
-
-        for count in range(num_objects):
+        keys = np.array(list(data_dict.keys()))
+        
+        for _ in range(num_objects):
             try:
-                random = np.random.randint(0, 9999)
-                name = data_dict[f"object{random}"]["name"]
-                usd_path = data_dict[f"object{random}"]["file_path"]
+                random = np.random.choice(keys)
+                name = data_dict[random]["name"]
+                usd_path = data_dict[random]["file_path"]
                 print(usd_path)
                 _ = create_prim(prim_path=work_path + "/" + name,
                                     usd_path=usd_path)
