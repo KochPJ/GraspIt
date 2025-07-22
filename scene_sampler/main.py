@@ -5,6 +5,7 @@ import docker
 import threading
 import cv2
 import imageio
+import time
 import subprocess
 import shutil
 from time import sleep
@@ -89,6 +90,7 @@ def main() -> None:
             container_count += 1
             batches -= 1
             used_gpus.add(gpu)
+            time.sleep(60)
         to_delete = []
         for key in threads.keys():
             thread, gpu = threads[key]
@@ -134,7 +136,7 @@ def clean_dataset():
             yaml_path = f"out/yaml/{batch_index}_yaml/{scene_index}.yaml"
             move(yaml_path, os.path.join(path, "scene.yaml"))
 
-            #scene-wise moving of output per scene
+            #scene-wise moving of output
             for _index, number in enumerate(numbers):
                 frame_path = os.path.join(path, f"frame_{_index}")
                 os.makedirs(frame_path, exist_ok=True)
