@@ -19,6 +19,8 @@ def main() -> None:
     threads = {}
     container_count = 0
 
+
+    #CLI
     while True:
         print("Initializing multi-gpu scene-sampler")
         while True:
@@ -62,7 +64,8 @@ def main() -> None:
         proceed = input("Run scene sampler with selected config? [Y/N]").lower()
         if proceed == "y":
             break
-
+    
+    #handeling of exces batch in case number of scenes and batchsize are not divisable
     if exces_batch > 0:
         gpu = query_gpu(80.0, used_gpus)
         thread = threading.Thread(target=start_container, args=(gpu, container_count, exces_batch))
@@ -72,6 +75,7 @@ def main() -> None:
         used_gpus.add(gpu)
 
 
+    #main loop for scene generation
     while batches > 0:
         if len(threads.keys()) < num_threads:
             gpu = query_gpu(80.0, used_gpus)
@@ -95,7 +99,8 @@ def main() -> None:
             thread, gpu = threads[key]
             used_gpus.remove(gpu)
             del threads[key]
-    
+
+    #waiting for all remaining containers to finish running
     for key in threads.keys():
         thread, gpu = threads[key]
         thread.join()
@@ -104,6 +109,8 @@ def main() -> None:
 
 
 def clean_dataset():
+    """Cleans up temporary directorys used by containers and generates complete dateset
+    """
     index = 0
     for batch in os.listdir("temp"):
         for scene in os.listdir(os.path.join("temp", batch)):
@@ -111,6 +118,7 @@ def clean_dataset():
             path = os.path.join("dataset", "scene_{}".format(index))
             
 
+            #computes numbers in format output by Isaac-Sim replicator
             num_frames = len(os.listdir(scene_path)) // 5
             numbers = []
             for _ in range(num_frames):
@@ -119,12 +127,14 @@ def clean_dataset():
                     number = "0" + number
                 numbers.append(number)
             
+            #setting up dataset directory
             os.makedirs(path, exist_ok=False)
             batch_index = batch.split("_")[0]
             scene_index = scene.split("_")[0]
             yaml_path = f"out/yaml/{batch_index}_yaml/{scene_index}.yaml"
             move(yaml_path, os.path.join(path, "scene.yaml"))
 
+            #scene-wise moving of output per scene
             for _index, number in enumerate(numbers):
                 frame_path = os.path.join(path, f"frame_{_index}")
                 os.makedirs(frame_path, exist_ok=True)
@@ -156,18 +166,22 @@ def clean_dataset():
         shutil.rmtree(file)
     for file in glob.glob("out/yaml/*"):
         shutil.rmtree(file)
-        
-
-def echo(id):
-    os.system(f"echo 'Starting Thread id {id}'")
-    sleep(5)
-
 
 def start_container(gpu, id, num_scenes, asset_path):
+    """starts Isaac-Sim container with defined config
+
+    Args:
+        gpu (_type_): Index of GPU to run container on
+        id (_type_): Runtime-ID of container
+        num_scenes (_type_): number of scenes to be generated
+        asset_path (_type_): directory of assets for scene generation
+    """
     os.system(f"echo 'Starting Isaac-Sim container: id {id}'")
     os.system(f"./isaac-sim.docker.sh {gpu} {id} {num_scenes} {asset_path}")
 
 def print_gpus():
+    """prints available GPUs
+    """
     pynvml.nvmlInit()
     deviceCount = pynvml.nvmlDeviceGetCount()
     for _ in range(deviceCount):
@@ -177,6 +191,15 @@ def print_gpus():
 
 
 def query_gpu(threshold, used_gpus) -> int:
+    """Queries available GPUs and selects GPU to run job
+
+    Args:
+        threshold (_type_): GPU-usage threshold for selection
+        used_gpus (_type_): GPUs currently running scene sampler
+
+    Returns:
+        int: Index of GPU selected for job processing
+    """
     pynvml.nvmlInit()
     deviceCount = pynvml.nvmlDeviceGetCount()
     for index in range(deviceCount):
@@ -190,6 +213,11 @@ def query_gpu(threshold, used_gpus) -> int:
 
 
 def get_gpu_count() -> int:
+    """Queries number of NVIDIA-GPUs available on current system
+
+    Returns:
+        int: number of visible NVIDIA-GPUs
+    """
     pynvml.nvmlInit()
     return pynvml.nvmlDeviceGetCount()
 
