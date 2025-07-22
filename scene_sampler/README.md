@@ -44,3 +44,4 @@ After data generation, the dataset will be in the following format:
     │   └── semantic_segmentation_labels_*.json
     ...
 ````
+*main.py* is the standalone startup for the scene sampler. The sampler queries the number of GPUs for usage, the number of generated scenes as well as a batch size for each running thread. The batch size can be used to balance loads when using multiple GPUs, however, running the scene sampler in the default settings without dramatically increasing the number of objects rendered per scene will keep GPU-usage at around 4Gb of VRAM.
