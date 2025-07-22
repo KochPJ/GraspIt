@@ -65,65 +65,6 @@ def run_orchestrator():
     rep.orchestrator.stop()
 
 
-def custom_main(object_usd_path: str, label: str):
-    world = World()
-    root_path = "/World/Workstation"
-    flag = False
-
-    scene = Scene.custom_scene(root_path=root_path, custom_obj=object_usd_path)
-    viewer = Viewer(
-        world=world, scene=scene, root_path=root_path, mode=args.mode
-    )
-    world.reset()
-    viewer.post_reset()
-    for _ in range(14):
-        world.render()
-    while simulation_app.is_running():
-        viewer.step_time += 1.0 / 60.0
-        if world.is_stopped():
-            print("break")
-            break
-
-        if not world.is_playing():
-            world.step(render=True)
-            continue
-
-        world.step(render=True)
-
-        if viewer.step_time > 0.2 and not flag:
-            stage = get_current_stage()
-            prim_path = f"/World/Workstation_0/{list(viewer.names)[0]}"
-            prim = stage.GetPrimAtPath(prim_path)
-            bbox = omni.usd.get_context().compute_path_world_bounding_box(prim_path)
-            curr_xmin, curr_ymin, curr_xmax, curr_ymax = bbox[0][0], bbox[0][1], bbox[1][0], bbox[1][1]
-            curr_zmin, curr_zmax = bbox[0][2], bbox[1][2]
-            height = (curr_zmax - curr_zmin) / 2
-
-            new_x = (curr_xmin + curr_xmax) / 2
-            new_x = new_x * (abs(new_x) > 0.01)
-            new_y = (curr_ymin + curr_ymax) / 2
-            new_y = new_y * (abs(new_y) > 0.01)
-            new_z = (curr_zmin + curr_zmax) / 2
-
-            new_z = viewer.plane_z + 0.5 - (new_z - viewer.plane_z) + height
-
-            print(bbox)
-            print(abs(new_x), abs(new_y), new_z)
-            if new_x != 0.0 or new_y != 0.0:
-                new_x, new_y = -new_x, -new_y
-            translation = Gf.Vec3d(new_x, new_y, new_z)
-            success = prim.GetAttribute("xformOp:translate").Set(translation, 0)
-            print(success)
-            flag = True
-        if viewer.step_time > 0.5:
-            break
-    # Simulation exit and clean-up
-    stage = get_current_stage()
-    stage.Export(f"out/scenes/{label}.usd")
-
-    return viewer, world
-
-
 def main(scene_path, yaml_path):
     world = World()
     root_path = "/World/Workstation"
@@ -246,71 +187,6 @@ def reset_scene(args, viewer, world):
 
     for _ in range(100):
         world.render()
-
-def generate_custom(args, path):
-    OUTDIR = path.strip(".usd")
-    open_stage(os.path.join("out/scenes", path))
-    stage = get_current_stage()
-    exceptions = set(["table", "Plane", "Enviroment"])
-
-
-
-    for i in range(100):
-        if i % 10 == 0:
-            print(f"updatimg SimulationApp: {i}")
-        simulation_app.update()
-
-    poses = []
-    for _ in range(12):
-        theta = 0 + _ *((2 * pi) / 12) 
-        x = 0.7 * cos(theta)
-        y = 0.7 * sin(theta)
-        z = 1.2
-        poses.append((x, y, z))
-
-    camera = rep.create.camera(
-        focus_distance=1,
-        clipping_range = (0.001, 100000)
-    )
-    plane = rep.create.plane(position=(0,0,0.1), scale = 100)
-    dome_light = rep.create.light(
-        light_type="dome",
-        temperature=6500,
-        intensity=500,
-        rotation=(0, 0, -90),
-        position=(0, 0, 10)
-    )
-    prims: List[Usd.Prim] = [x for x in stage.Traverse() if x.IsA(UsdGeom.Mesh)]
-    scene_objects = [str(prim.GetPath()) for prim in prims]
-    scene_names = [element.split("/")[3] for element in scene_objects]
-    prims = [(rep.get.prims(path_pattern=name), name) for name in scene_names if name not in exceptions]
-    table = [rep.get.prims(path_pattern=name) for name in scene_names if "table" in name][0]
-
-    writer = rep.WriterRegistry.get("BasicWriter")
-    writer.initialize(
-        output_dir= f"{os.path.join(os.getcwd(), 'temp', OUTDIR)}",
-        rgb=True
-    )
-    render_product = rep.create.render_product(camera, (512, 512))
-    writer.attach([render_product])
-
-    with rep.trigger.on_frame(max_execs=12, rt_subframes=10):
-        with camera:
-            rep.modify.pose(
-                position=rep.distribution.sequence(poses),
-                look_at=(0.0, 0.0, 0.95)
-            )
-        with table:
-            rep.modify.visibility(False)
-        for item in prims:
-            prim, name = item
-            with prim:
-                rep.randomizer.texture(textures=[
-                        os.path.join("/share/textures", item) for item in os.listdir("/share/textures")
-                    ])
-    
-    rep.orchestrator.run()
-    simulation_app.update()
     
 
 def generate_data(args, scene_path, path, temp_path):
@@ -397,47 +273,18 @@ if __name__ == "__main__":
     os.makedirs(scene_path, exist_ok=True)
     os.makedirs(yaml_path, exist_ok=True)
     os.makedirs(temp_path, exist_ok=True)
-    if args.mode == "custom":
-        try:
-            model = args.model
-            path = f"ModelNet40/{model}_converted"
-            for folder in os.listdir(os.path.join(path,)):
-                for obj in os.listdir(os.path.join(path, folder)):
-                    if ".usd" in obj:
-                        viewer, world = custom_main(os.path.join(path, folder, obj), f"{folder}_{obj.strip('.usd')}")
-                        reset_scene(args, viewer, world)
-            for path in os.listdir("out/scenes"):
-                rep_count = len(os.listdir("temp"))
-                scene_count = len(os.listdir("out/scenes"))
-                print(f"processing scene {path}: {rep_count} out of {scene_count} ")
-                generate_custom(args, path)
-                while rep.orchestrator.get_is_started():
-                        simulation_app.update()
-            os.makedirs(f"dataset/{model}/test")
-            os.makedirs(f"dataset/{model}/train")
-            for folder in os.listdir("temp"):
-                if "test" in folder:
-                    move(os.path.join("temp", folder), f"dataset/{model}/test")
-                else:
-                    move(os.path.join("temp", folder), f"dataset/{model}/train")
-        except Exception as e:
-            print(e)
-
-    
-    else:
-        try:
-            for _ in range(args.num_scenes):
-                viewer, world = main(scene_path, yaml_path)
-                COUNT += 1
-                reset_scene(args, viewer, world)
-            for path in os.listdir(scene_path):
-                generate_data(args, scene_path, path, temp_path)
-                while rep.orchestrator.get_is_started():
-                    simulation_app.update()
+    try:
+        for _ in range(args.num_scenes):
+            viewer, world = main(scene_path, yaml_path)
+            COUNT += 1
+            reset_scene(args, viewer, world)
+        for path in os.listdir(scene_path):
+            generate_data(args, scene_path, path, temp_path)
             while rep.orchestrator.get_is_started():
                 simulation_app.update()
-            for _ in range(100):
-                simulation_app.update()
-        except Exception as e:
-            pass
-            print(e)
+        while rep.orchestrator.get_is_started():
+            simulation_app.update()
+        for _ in range(100):
+            simulation_app.update()
+    except Exception as e:
+        print(e)

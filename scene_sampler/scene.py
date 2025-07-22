@@ -15,33 +15,17 @@ import numpy as np
 import os
 @dataclass
 class Scene():
+    """Classobject for generating Isaac-Sim Scenes
+
+    Returns:
+        Scene: Scene-Object 
+    """
 
     objects: Optional[List[DynamicObject]] = None
     table: Optional[List[DynamicObject]] = None
     names: Optional[List[str]] = None
 
     work_path: str = None
-
-
-    @staticmethod
-    def custom_scene(root_path:str = "/World/Workstation",
-                     custom_obj: str = "") -> Scene:
-        work_path = root_path + "_0"
-        _ = define_prim(work_path)
-
-        name = custom_obj.split("/")[-1].split(".")[0]
-
-        table_usd = get_table_usd()
-        _ = create_prim(prim_path=work_path + "/" + "table", usd_path=table_usd, scale=[0.01])
-        _ = create_prim(prim_path=work_path + "/" + name, usd_path=custom_obj)
-        names = [name]
-
-        return Scene(
-            names=names,
-            work_path=work_path
-        )
-
-
 
     @staticmethod
     def from_dict(data_dict: Dict[str, Any],

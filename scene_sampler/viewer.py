@@ -102,50 +102,6 @@ class Viewer(object):
         physicsContext.set_gravity(gravity)
         return
 
-    def setup_custom(self) -> None:
-        self.world.scene.add_default_ground_plane()
-        self.world.scene.add_default_ground_plane()
-
-        table = DynamicObject(prim_path=self.scenes[0].work_path + "/" + "table",
-                              name="table_0",
-                              collision=True,
-                              rigid_body_physics=False,
-                              approximation=None,
-                              use_visual_material=False,
-                              use_physics_material=False,
-                              scale=[0.01, 0.01, 0.01])
-        self.world.scene.add(table)
-        self.lookup["table"] = [0.01, 0.01, 0.01]
-
-        bounding_box = table.compute_bb()
-        table_scale = np.array(bounding_box[3:]) - np.array(bounding_box[:3])
-        self.min_x, self.max_x = bounding_box[0], bounding_box[3]
-        self.min_y, self.max_y = bounding_box[1], bounding_box[4]
-        self.plane_z = bounding_box[-1]
-        print(self.plane_z)
-        collision_position = table.get_world_pose()[0]
-        collision_position[2] = bounding_box[-1] - table_scale[2]
-
-
-        name = list(self.names)[0]
-        translation = np.array([0, 0, self.plane_z + 0.5])
-        orientation = None
-        
-        obj_bounding_box = omni.usd.get_context().compute_path_world_bounding_box(self.scenes[0].work_path + "/" + name)
-        obj_scale = np.array(obj_bounding_box[1]) - np.array(obj_bounding_box[0])
-        scale = [(table_scale[0] / obj_scale[0]) * 0.3,
-                 (table_scale[1] / obj_scale[1]) * 0.3,
-                 (table_scale[2] / obj_scale[2]) * 0.3]
-
-
-        obj = DynamicObject(prim_path=self.scenes[0].work_path + "/" + name,
-                            name = name + "_0",
-                            translation=translation,
-                            scale=scale)
-        self.lookup[name] = scale
-        self.objects.add(obj)
-        self.world.scene.add(obj)
-
 
     def setup_scene(self) -> None:
         """Setup for synthetic scene, population, randomization and scaling of assets
@@ -188,6 +144,9 @@ class Viewer(object):
             factors = [obj_scale[0] / 0.08, obj_scale[1] / 0.08, obj_scale[2] / 0.08]
             _max = max(factors)
             print(factors, _max)
+            ################################
+            # scaling objects to fit on table and have sizes in 'reasonable' ranges, e.g not beeing to small or to large
+            ################################
             if _max in [0.1, 1]:
                 _object = DynamicObject(prim_path=self.scenes[0].work_path + "/" + name,
                                        name=name,
@@ -214,7 +173,13 @@ class Viewer(object):
             self.world.scene.add(_object)
         return
     
-    def save_scene(self, count, yaml_path):
+    def save_scene(self, count: int, yaml_path: str):
+        """generating .yaml file to save scene and enable later reloading
+
+        Args:
+            count (int): index of current scene
+            yaml_path (str): path of .yaml file
+        """
         import yaml
 
         print("Saving Scene")

@@ -169,14 +169,14 @@ def clean_dataset():
     for file in glob.glob("out/yaml/*"):
         shutil.rmtree(file)
 
-def start_container(gpu, id, num_scenes, asset_path):
+def start_container(gpu: int, id: int, num_scenes: int, asset_path: str):
     """starts Isaac-Sim container with defined config
 
     Args:
-        gpu (_type_): Index of GPU to run container on
-        id (_type_): Runtime-ID of container
-        num_scenes (_type_): number of scenes to be generated
-        asset_path (_type_): directory of assets for scene generation
+        gpu (int): Index of GPU to run container on
+        id (int): Runtime-ID of container
+        num_scenes (int): number of scenes to be generated
+        asset_path (str): directory of assets for scene generation
     """
     os.system(f"echo 'Starting Isaac-Sim container: id {id}'")
     os.system(f"./isaac-sim.docker.sh {gpu} {id} {num_scenes} {asset_path}")
@@ -192,12 +192,12 @@ def print_gpus():
         print(_, name)
 
 
-def query_gpu(threshold, used_gpus) -> int:
+def query_gpu(threshold: float, used_gpus: int) -> int:
     """Queries available GPUs and selects GPU to run job
 
     Args:
-        threshold (_type_): GPU-usage threshold for selection
-        used_gpus (_type_): GPUs currently running scene sampler
+        threshold (float): GPU-usage threshold for selection
+        used_gpus (int): GPUs currently running scene sampler
 
     Returns:
         int: Index of GPU selected for job processing
