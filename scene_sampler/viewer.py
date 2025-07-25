@@ -131,10 +131,13 @@ class Viewer(object):
 
         for name in self.scenes[0].names:
             if self.mode == "random":
-                translation = np.array([np.random.uniform(self.min_x, self.max_x),
-                                        np.random.uniform(self.min_y, self.max_y),
+                translation = np.array([np.random.uniform(self.min_x - self.min_x * 0.3, self.max_x - self.max_x * 0.3),
+                                        np.random.uniform(self.min_y -self.min_y * 0.3, self.max_y - self.max_y * 0.3),
                                         np.random.uniform(self.plane_z + 0.5, self.plane_z + 2.5)])
-                orientation = None
+                orientation = np.array([1,
+                                        np.random.uniform(0, 360),
+                                        np.random.uniform(0, 360),
+                                        np.random.uniform(0, 360)])
             elif self.mode == "linear":
                 translation = np.array([0.0, 0.0, self.plane_z + 0.5])
                 
@@ -152,6 +155,7 @@ class Viewer(object):
                                        name=name,
                                        #color=np.random.rand(1, 3),
                                        translation=translation,
+                                       orientation=orientation,
                                        scale = [1.0, 1.0, 1.0])
                 self.lookup[name] = [1.0, 1.0, 1.0]
             elif _max > 1:
@@ -159,6 +163,7 @@ class Viewer(object):
                                        name=name,
                                        #color=np.random.rand(1, 3),
                                        translation=translation,
+                                       orientation=orientation,
                                        scale = [1 / _max, 1 / _max, 1 / _max])
                 self.lookup[name] = [1 / _max, 1 / _max, 1 / _max]
             else:
@@ -166,6 +171,7 @@ class Viewer(object):
                                    name=name,
                                    #color=np.random.rand(1, 3),
                                    translation=translation,
+                                   orientation=orientation,
                                    scale = [5.0, 5.0, 5.0])
                 self.lookup[name]= [5.0, 5.0, 5.0]
 

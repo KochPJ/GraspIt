@@ -79,7 +79,7 @@ def main() -> None:
     #main loop for scene generation
     while batches > 0:
         if len(threads.keys()) < num_threads:
-            gpu = query_gpu(80.0, used_gpus)
+            gpu = query_gpu(90.0, used_gpus)
             if gpu is False:
                 continue
             print("Selecting gpu {} for thread with id {}".format(gpu, container_count))
