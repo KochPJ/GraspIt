@@ -214,6 +214,12 @@ def generate_data(args, scene_path, path, temp_path):
         look_at=(0, 0, 0),
         focus_distance=focus_distance
     )
+    ground_plane = rep.create.plane(
+        position=(0, 0, 0.1),
+        scale=20,
+        semantics=[("class", "plane")],
+        rotation=(0, 0, 0)
+    )
     dome_light = rep.create.light(
         light_type="dome",
         temperature=6500,
@@ -221,13 +227,33 @@ def generate_data(args, scene_path, path, temp_path):
         rotation=(0, 0, -90),
         position=(0, 0, 5)
     )
+    distance_light = rep.create.light(
+        light_type="distant",
+        temperature=6500,
+        intensity=1000,
+        look_at=(0, 0, 0.82)
+    )
+    distance_light_1 = rep.create.light(
+        light_type="distant",
+        temperature=6500,
+        intensity=1000,
+        look_at=(0, 0, 0.82),
+        position=(5, 0, 0)
+    )
+    distance_light_2 = rep.create.light(
+        light_type="distant",
+        temperature=6500,
+        intensity=1000,
+        look_at=(0, 0, 0.82),
+        position=(-5, 0, 5)
+    )
 
     prims: List[Usd.Prim] = [x for x in stage.Traverse() if x.IsA(UsdGeom.Mesh)]
     scene_objects = [str(prim.GetPath()) for prim in prims]
+    print(scene_objects)
     scene_names = [element.split("/")[3] for element in scene_objects]
-    prims = [(rep.get.prims(path_pattern=name), name) for name in scene_names if "table" not in name and 'Enviroment' not in name]
+    prims = [(rep.get.prims(path_pattern=name), name) for name in scene_names if "table" not in name and 'Enviroment' not in name and "Plane" not in name]
     table = [rep.get.prims(path_pattern=name) for name in scene_names if "table" in name][0]
-    enviroment = [rep.get.prims(path_pattern=name) for name in scene_names if "Enviroment" in name][0]
 
     bounding_box = omni.usd.get_context().compute_path_world_bounding_box("/World/Workstation_0/table")
 
@@ -246,7 +272,7 @@ def generate_data(args, scene_path, path, temp_path):
     
     num_views = np.random.randint(20, 60)
     textures = [os.path.join("/share/textures", item) for item in os.listdir("/share/textures")]
-    with rep.trigger.on_frame(max_execs=num_views, rt_subframes=80):
+    with rep.trigger.on_frame(max_execs=num_views, rt_subframes=40:
         with table:
             rep.modify.semantics([('class', 'table')])
         with camera:
@@ -259,8 +285,7 @@ def generate_data(args, scene_path, path, temp_path):
             with prim:
                 rep.modify.semantics([('class', f'{name}')])
                 rep.randomizer.texture(textures=textures)
-        with enviroment:
-            rep.randomizer.color(colors=[(128, 128, 128)])
+
     
     rep.orchestrator.run()
     simulation_app.update()        
