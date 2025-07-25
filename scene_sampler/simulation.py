@@ -73,7 +73,7 @@ def main(scene_path, yaml_path):
     with open(args.config, "r") as f:
         data_dict = safe_load(f)
 
-    num_objects = np.random.randint(5, 20)
+    num_objects = np.random.randint(10, 20)
     # TODO: Create random object loader
     scene = Scene.from_dict(data_dict, root_path, num_objects=num_objects)
     viewer = Viewer(
@@ -272,7 +272,7 @@ def generate_data(args, scene_path, path, temp_path):
     
     num_views = np.random.randint(20, 60)
     textures = [os.path.join("/share/textures", item) for item in os.listdir("/share/textures")]
-    with rep.trigger.on_frame(max_execs=num_views, rt_subframes=40:
+    with rep.trigger.on_frame(max_execs=num_views, rt_subframes=40):
         with table:
             rep.modify.semantics([('class', 'table')])
         with camera:
