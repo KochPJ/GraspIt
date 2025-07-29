@@ -1,5 +1,5 @@
 ## Overview
-<img src="images/rgb_0007.png" width="300"\> <img src="images/semantic_segmentation_0007.png" width="300"\>
+<img src="images/rgb_0007.png" width="300"\>
 ## Installation
 The scene sampler currently runs on Isaac-Sim 2023.1.0-hotfix.1. While this is no longer a release version of Isaac-Sim, docker deployment is still possible. Docker installation of Isaac-Sim requires the [NVIDIA Docker Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html). 
 
