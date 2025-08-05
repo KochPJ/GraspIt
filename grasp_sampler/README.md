@@ -1,6 +1,7 @@
 ## Overview
 
-<img src="images/scene.png" title="Scene" width="500"/>
+<!--<img src="images/scene.png" title="Scene" width="500"/> -->
+![avatar](images/scene.png)
 
 ## Installation
 
