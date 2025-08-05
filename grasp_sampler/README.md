@@ -1,6 +1,6 @@
 ## Overview
 
-<img src="images/pipe.png" title="RGB" width="330"/> <img src="images/cup.png" title="Segmentation labels" width="330"/> <img src="images/bowl.png" title="Depth" width="330"/>
+<img src="images/scene.png" title="RGB" width="330"/>
 
 ## Installation
 
