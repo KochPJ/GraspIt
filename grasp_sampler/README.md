@@ -1,6 +1,6 @@
 ## Overview
 
-<img src="images/scene.png" title="RGB" width="330"/>
+<img src="images/scene.png" title="Scene" width="500"/>
 
 ## Installation
 
