@@ -17,7 +17,7 @@ def options():
     parser.add_argument("-mg",
                         "--max_grasps",
                         type=int,
-                        default=200,
+                        default=2500,
                         help="Number of maximal grasps to sample.")
     
     parser.add_argument("-mr",
@@ -39,7 +39,7 @@ def options():
     
     parser.add_argument("-va",
                         "--visualize_all",
-                        action="store_false",
+                        action="store_true",
                         help="Set to true if we want to visualize all results.")
     
     parser.add_argument("-s",
@@ -73,7 +73,7 @@ if __name__ == '__main__':
         print(f"Scene: {len(scene_paths)}/{i+1}")
 
         scene = Scene.from_dict(load_yaml(path))
-        scene.show()
+        #scene.show()
         sampler = GraspSampler(args, scene, scene_path_yml=path)
         sampler.sample()
         
