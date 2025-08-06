@@ -31,5 +31,3 @@ python3 main.py -np 20000 -mg 5000 -f 0.35 -s path/to/scenes/ -i "0-9" --visuali
 1. **Number of points (`num_points`)**: Higher values yield a denser point cloud and more accurate results, but increase runtime.
 2. **`max_grasps`** and **`max_rotations`**: Adjust to control the variety and number of generated grasps.
 3. **`friction`**: Change the coefficient to simulate different physical scenarios.
-4. **Visualization:** Use `--visualize_single` or `--visualize_all` to display results graphically.
-5. **Scene selection (`indices`)**: Use `--indices` to select specific scenes for processing.
