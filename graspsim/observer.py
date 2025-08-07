@@ -14,7 +14,7 @@ from omni.isaac.core.utils.rotations import (
 )
 
 from environment import Environment
-from controller2 import RobotController
+from controller import RobotController
 from omni.isaac.core.prims import XFormPrim
 
 from omni.usd.commands import MovePrimsCommand, MovePrimCommand

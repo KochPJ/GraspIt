@@ -20,7 +20,7 @@ from omni.isaac.core import World
 
 from geometry import DynamicObject
 
-from controller2 import RobotController
+from controller import RobotController
 
 from scene import Scene
 from environment import Environment, EnvironmentScheduler
