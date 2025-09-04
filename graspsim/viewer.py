@@ -37,6 +37,8 @@ from curobo.util_file import load_yaml
 
 from pxr import Usd
 
+import toml
+
 
 class SimViewer(object):
     """In this class you will find all the code of the simulation behavior.
@@ -45,7 +47,7 @@ class SimViewer(object):
         world: Isaac Sim World object
     """
 
-    def __init__(self, world: World, scene_paths: List, root_path: str) -> None:
+    def __init__(self, world: World, scene_paths: List, root_path: str, robot_config: str) -> None:
         self.world = world
         self.scene_paths = scene_paths
 
@@ -57,6 +59,12 @@ class SimViewer(object):
         self.scene_path_idx = 0
         self.scene_path_idx = 0
         self.root_path = root_path
+
+        self.robot_config = {}
+
+        if robot_config:
+            with open(robot_config, 'r') as f:
+                self.robot_config = toml.load(f)
 
         self.n_env = MAX_ENV
 
@@ -144,7 +152,7 @@ class SimViewer(object):
 
         self.robot_orientations = [env.robot.get_local_pose()[1] for env in self.envs]
 
-        self.batch = 25
+        self.batch = 30
         self.controller = RobotController(
                                     name="collision_free_trajectory_generator",
                                     articulation=self.envs[0].articualtion,
@@ -152,7 +160,8 @@ class SimViewer(object):
                                     robot_orientations=self.robot_orientations,
                                     offset_position=np.array(self.base_work_position),
                                     batch=self.batch,
-                                    warmup=True
+                                    warmup=True,
+                                    robot_config=self.robot_config
                            )
         self.warmup = False
         
@@ -173,7 +182,7 @@ class SimViewer(object):
 
         set_camera_view(eye=[2, 0, 1], target=[0.00, 0.00, 0.00], camera_prim_path="/OmniverseKit_Persp")
 
-        self.load_trajectorys = True
+        self.load_trajectorys = False
 
         return
 
@@ -874,7 +883,8 @@ class SimViewer(object):
                                             robot_orientations=self.robot_orientations,
                                             offset_position=np.array(self.base_work_position),
                                             batch=self.batch,
-                                            warmup=self.warmup
+                                            warmup=self.warmup,
+                                            robot_config=self.robot_config
                                 )
                 
                 self.robot_observer = RobotObserver(envs=self.envs,

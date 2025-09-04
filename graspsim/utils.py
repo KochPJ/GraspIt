@@ -25,10 +25,14 @@ def get_table_usd():
     table_usd = asset_folder + "SubUSDs/Shop_Table/Shop_Table.usd"
     return table_usd
 
-def get_robot_cfg():
-    robot_cfg_path = get_robot_configs_path()
+def get_robot_cfg(robot_cfg_path: str):
+    if robot_cfg_path is None:
+        robot_cfg_path = get_robot_configs_path()
+        robot_cfg_path = join_path(robot_cfg_path, "franka.yml")
+
     print(robot_cfg_path)
-    robot_cfg = load_yaml(join_path(robot_cfg_path, "franka.yml"))["robot_cfg"]
+    robot_cfg = load_yaml(robot_cfg_path)["robot_cfg"]
+
     return robot_cfg
 
 @contextmanager

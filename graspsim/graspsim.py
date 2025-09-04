@@ -14,7 +14,7 @@ def options():
     parser.add_argument(
         "-sp",
         "--scene_paths",
-        default="/share/scenes",
+        default="/share/scenes_3",
         type=str,
         help="Paths to scenes."
     )
@@ -25,6 +25,14 @@ def options():
         default="",
         type=str,
         help="Index range of scenes."
+    )
+
+    parser.add_argument(
+        "-r",
+        "--robot_config",
+        default="",
+        type=str,
+        help="Path to the robot config file."
     )
 
     arguments = parser.parse_args()
@@ -53,7 +61,7 @@ def main():
     print(scene_paths)
 
     viewer = SimViewer(
-        world=world, scene_paths=scene_paths, root_path=root_path
+        world=world, scene_paths=scene_paths, root_path=root_path, robot_config=args.robot_config
     )
 
     # Its recommended to always do a reset after adding your assets/prims
