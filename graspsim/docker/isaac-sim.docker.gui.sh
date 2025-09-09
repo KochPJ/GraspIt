@@ -38,6 +38,9 @@ if ! [[ -z "${PRIVACY_USERID}" ]]; then
 	privacy_userid="${PRIVACY_USERID}"
 fi
 
+graspsim_path="/home/karaadem/git/OptiSim/graspsim"
+scene_path="/media/karaadem/09754e8d-bf9b-4d4f-abf5-f59278453ad9/OptiSim/share"
+
 echo "Logging in to nvcr.io..."
 #docker login nvcr.io
 
@@ -46,7 +49,7 @@ echo "Pulling docker image..."
 
 echo "Running Isaac Sim container with X11 forwarding..."
 xhost +
-docker run --name isaac-simds --entrypoint /bin/sh -it --gpus "device=0" -e "ACCEPT_EULA=${accept_eula}" --rm --network=host \
+docker run --name graspsim_container --entrypoint /bin/sh -it --gpus "device=0" -e "ACCEPT_EULA=${accept_eula}" --rm --network=host \
 	-v $HOME/.Xauthority:/root/.Xauthority \
 	-e DISPLAY \
 	-e "OMNI_USER=${omni_user}" -e "OMNI_PASS=${omni_password}" \
@@ -61,9 +64,9 @@ docker run --name isaac-simds --entrypoint /bin/sh -it --gpus "device=0" -e "ACC
 	-v ~/docker/isaac-sim/config:/root/.nvidia-omniverse/config:rw \
 	-v ~/docker/isaac-sim/data:/root/.local/share/ov/data:rw \
 	-v ~/docker/isaac-sim/documents:/root/Documents:rw \
-	-v /home/karaadem/git/synthetic_data:/home/karaadem/git/synthetic_data:rw \
-	-v /mnt/4TBSSD/synthetic_data/share:/share:rw \
-	isaasim:1.0 \
+	-v ${graspsim_path}:/graspsim:rw \
+	-v ${scene_path}:/scenes:rw \
+	graspsim \
 	-c "${command}"
 
 echo "Isaac Sim container run completed!"

@@ -51,7 +51,8 @@ class RobotController(object):
                  offset_orientation: Optional[np.ndarray] = None, 
                  batch: Optional[int] = None,
                  warmup: bool = None,
-                 end_effector_initial_height: float = 0.3) -> None:
+                 end_effector_initial_height: float = 0.3,
+                 robot_config: dict = {} ) -> None:
 
         self.articulation = articulation
         self.batch = batch
@@ -62,7 +63,7 @@ class RobotController(object):
         self.usd_help.load_stage(get_current_stage())
         self.tensor_args = TensorDeviceType()
 
-        robot_cfg = get_robot_cfg()
+        robot_cfg = get_robot_cfg(robot_cfg_path=robot_config.get("robot_cfg_path"))
         j_names = robot_cfg["kinematics"]["cspace"]["joint_names"]
         default_config = robot_cfg["kinematics"]["cspace"]["retract_config"]
 
@@ -179,9 +180,8 @@ class RobotController(object):
             mg_extension_path, "motion_policy_configs"
         )
         self._taskspace_trajectory_generator = LulaTaskSpaceTrajectoryGenerator(
-            robot_description_path=kinematics_config_dir
-            + "/franka/rmpflow/robot_descriptor.yaml",
-            urdf_path=kinematics_config_dir + "/franka/lula_franka_gen.urdf",
+            robot_description_path=robot_config.get("robot_description_path"),
+            urdf_path=robot_config.get("urdf_path"),
         )
         self._taskspace_trajectory_generator.get_path_conversion_config().max_iterations = 1000
         self._taskspace_trajectory_generator.get_path_conversion_config().max_position_deviation = 0.01
@@ -189,9 +189,8 @@ class RobotController(object):
         # Kinematic Solver
         print(kinematics_config_dir)
         self._kinematics_solver = LulaKinematicsSolver(
-            robot_description_path=kinematics_config_dir
-            + "/franka/rmpflow/robot_descriptor.yaml",
-            urdf_path=kinematics_config_dir + "/franka/lula_franka_gen.urdf",
+            robot_description_path=robot_config.get("robot_description_path"),
+            urdf_path=robot_config.get("urdf_path"),
         )
 
         self.r90 = R.from_euler('y', 90, degrees=True).as_matrix()
@@ -439,9 +438,13 @@ class RobotController(object):
         transition_mode = lula.CompositePathSpec.TransitionMode.FREE
         composite_path_spec.add_task_space_path_spec(task_space_spec, transition_mode)
 
-        trajectory = self._taskspace_trajectory_generator.compute_task_space_trajectory_from_path_spec(
-            composite_path_spec, "right_gripper"
-        )
+        trajectory = None
+        try:
+            trajectory = self._taskspace_trajectory_generator.compute_task_space_trajectory_from_path_spec(
+                composite_path_spec, "right_gripper"
+            )
+        except Exception as e:
+            print(f"Fehler aufgetreten: {e}. Versuche es erneut...")
         
         action_sequence = None
         if trajectory is None:

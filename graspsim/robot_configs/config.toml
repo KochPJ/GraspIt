@@ -1,0 +1,3 @@
+robot_cfg_path = "robot_configs/curobo/franka.yml"
+robot_description_path = "robot_configs/lula/robot_descriptor.yaml"
+urdf_path = "robot_configs/lula/lula_franka_gen.urdf"
