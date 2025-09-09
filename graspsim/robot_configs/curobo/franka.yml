@@ -86,6 +86,7 @@ robot_cfg:
         "attached_object": 0.0,
       }
     #link_names: ["panda_link4"]
+    
     mesh_link_names:
       [
         "panda_link0",
