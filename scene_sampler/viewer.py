@@ -108,6 +108,12 @@ class Viewer(object):
         """
         self.world.scene.add_default_ground_plane()
 
+        stage = get_current_stage()
+        unit = UsdGeom.LinearUnits.meters
+        UsdGeom.SetStageMetersPerUnit(stage, unit)
+        
+        assert UsdGeom.GetStageMetersPerUnit(stage) == unit
+
         self.objects = []
         table = DynamicObject(prim_path=self.scenes[0].work_path + "/" + "table",
                               name="table_0",
@@ -134,7 +140,7 @@ class Viewer(object):
                 translation = np.array([np.random.uniform(self.min_x - self.min_x * 0.3, self.max_x - self.max_x * 0.3),
                                         np.random.uniform(self.min_y -self.min_y * 0.3, self.max_y - self.max_y * 0.3),
                                         np.random.uniform(self.plane_z + 0.5, self.plane_z + 2.5)])
-                orientation = np.array([1,
+                orientation = np.array([np.random.random(),
                                         np.random.uniform(0, 360),
                                         np.random.uniform(0, 360),
                                         np.random.uniform(0, 360)])

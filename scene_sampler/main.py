@@ -14,6 +14,7 @@ import numpy as np
 from shutil import move
 import argparse
 from typing import *
+from PIL import Image
 
 
 def main() -> None:
@@ -153,8 +154,16 @@ def clean_dataset():
                 move(os.path.join(scene_path, mask_label), os.path.join(frame_path, mask_label))
 
                 depth_image = np.load(os.path.join(scene_path, depth))
-                comp_depth = (65535*(depth_image - depth_image.min())/np.ptp(depth_image)).astype(np.uint16)
-                imageio.imwrite(os.path.join(frame_path, "depth.png"), comp_depth)  
+                depth_image[depth_image< 0] = 0
+                depth_image[depth_image > 65000/5000] = 0
+                depth_image = depth_image*5000
+
+                depth = np.array(depth_image, dtype=np.uint16)
+                depth = Image.fromarray(depth)
+                depth.save(os.path.join(frame_path, "depth.png"))
+
+                #comp_depth = (65535*(depth_image - depth_image.min())/np.ptp(depth_image)).astype(np.uint16)
+                #imageio.imwrite(os.path.join(frame_path, "depth.png"), comp_depth)  
             
             index += 1
 
