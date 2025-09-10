@@ -1,0 +1,237 @@
+import os 
+import sys
+import pynvml
+import docker
+import threading
+import cv2
+import imageio
+import time
+import subprocess
+import shutil
+from time import sleep
+import glob
+import numpy as np
+from shutil import move
+import argparse
+from typing import *
+from PIL import Image
+
+
+def main() -> None:
+    threads = {}
+    container_count = 0
+
+
+    #CLI
+    while True:
+        print("Initializing multi-gpu scene-sampler")
+        while True:
+            print("Number of gpus currently available for sampling:")
+            print_gpus()
+            num_threads = int(input("Enter number of gpus for use:"))
+            if num_threads > get_gpu_count():
+                print("Invalid option, number of selected gpus > number of available gpus!")
+            else:
+                print(f"Selected {num_threads} gpus for scene-sampling")
+                used_gpus = set([i for i in range(num_threads, get_gpu_count())])
+                break
+        
+        
+        asset_path = input("Enter path to assets to be loaded during scene generation (default: /share/):")
+        if os.path.exists(asset_path):
+            print(asset_path)
+        elif asset_path == "":
+            asset_path = "/share/"
+        else:
+            print("Not a valid asset path, defaulting to /share/")
+            asset_path = "/share/"
+
+        batch_size = input("Enter batchsize for scene sampling (default: 50):")
+        if batch_size == "":
+            batch_size = 50
+        else:
+            batch_size = int(batch_size)
+        
+        num_scenes = input("Enter number of scenes to be sampled (default: 500):")
+        if num_scenes == "":
+            num_scenes = 500
+        else:
+            num_scenes = int(num_scenes)
+        
+        exces_batch = num_scenes % batch_size
+        num_scenes -= num_scenes % batch_size
+        batches = num_scenes // batch_size
+
+        print(f"Finished initialization with {num_threads} gpus, {num_scenes} scenes and batchsize of {batch_size}, leading to exces batch of size {exces_batch}")
+        proceed = input("Run scene sampler with selected config? [Y/N]").lower()
+        if proceed == "y":
+            break
+    
+    #handeling of exces batch in case number of scenes and batchsize are not divisable
+    if exces_batch > 0:
+        gpu = query_gpu(80.0, used_gpus)
+        thread = threading.Thread(target=start_container, args=(gpu, container_count, exces_batch))
+        threads[container_count] = (thread, gpu)
+        thread.start()
+        container_count += 1
+        used_gpus.add(gpu)
+
+
+    #main loop for scene generation
+    while batches > 0:
+        if len(threads.keys()) < num_threads:
+            gpu = query_gpu(90.0, used_gpus)
+            if gpu is False:
+                continue
+            print("Selecting gpu {} for thread with id {}".format(gpu, container_count))
+            thread = threading.Thread(target=start_container, args=(gpu, container_count, batch_size, asset_path))
+            threads[container_count] = (thread, gpu)
+            thread.start()
+            print(used_gpus, threads)
+            container_count += 1
+            batches -= 1
+            used_gpus.add(gpu)
+            time.sleep(60)
+        to_delete = []
+        for key in threads.keys():
+            thread, gpu = threads[key]
+            if not thread.is_alive():
+                to_delete.append(key)
+        
+        for key in to_delete:
+            thread, gpu = threads[key]
+            used_gpus.remove(gpu)
+            del threads[key]
+
+    #waiting for all remaining containers to finish running
+    for key in threads.keys():
+        thread, gpu = threads[key]
+        thread.join()
+    
+    clean_dataset()
+
+
+def clean_dataset():
+    """Cleans up temporary directorys used by containers and generates complete dateset
+    """
+    index = 0
+    for batch in os.listdir("temp"):
+        for scene in os.listdir(os.path.join("temp", batch)):
+            scene_path = os.path.join("temp", batch, scene)
+            path = os.path.join("dataset", "scene_{}".format(index))
+            
+
+            #computes numbers in format output by Isaac-Sim replicator
+            num_frames = len(os.listdir(scene_path)) // 5
+            numbers = []
+            for _ in range(num_frames):
+                number = "{}".format(_)
+                while len(number) < 4:
+                    number = "0" + number
+                numbers.append(number)
+            
+            #setting up dataset directory
+            os.makedirs(path, exist_ok=False)
+            batch_index = batch.split("_")[0]
+            scene_index = scene.split("_")[0]
+            yaml_path = f"out/yaml/{batch_index}_yaml/{scene_index}.yaml"
+            move(yaml_path, os.path.join(path, "scene.yaml"))
+
+            #scene-wise moving of output
+            for _index, number in enumerate(numbers):
+                frame_path = os.path.join(path, f"frame_{_index}")
+                os.makedirs(frame_path, exist_ok=True)
+
+                cam_params = "camera_params_{}.json".format(number)
+                depth =  "distance_to_camera_{}.npy".format(number)
+                rgb = "rgb_{}.png".format(number)
+                mask = "semantic_segmentation_{}.png".format(number)
+                mask_label = "semantic_segmentation_labels_{}.json".format(number)
+
+                move(os.path.join(scene_path, cam_params), os.path.join(frame_path, cam_params))
+                move(os.path.join(scene_path, rgb), os.path.join(frame_path, rgb))
+                move(os.path.join(scene_path, mask), os.path.join(frame_path, mask))
+                move(os.path.join(scene_path, mask_label), os.path.join(frame_path, mask_label))
+
+                depth_image = np.load(os.path.join(scene_path, depth))
+                depth_image[depth_image< 0] = 0
+                depth_image[depth_image > 65000/5000] = 0
+                depth_image = depth_image*5000
+
+                depth = np.array(depth_image, dtype=np.uint16)
+                depth = Image.fromarray(depth)
+                depth.save(os.path.join(frame_path, "depth.png"))
+
+                #comp_depth = (65535*(depth_image - depth_image.min())/np.ptp(depth_image)).astype(np.uint16)
+                #imageio.imwrite(os.path.join(frame_path, "depth.png"), comp_depth)  
+            
+            index += 1
+
+    print("==========================")
+    print("finished dataset generation, cleaning up...")
+    print("==========================")
+
+    for file in glob.glob("temp/*"):
+        shutil.rmtree(file)
+    for file in glob.glob("out/scenes/*"):
+        shutil.rmtree(file)
+    for file in glob.glob("out/yaml/*"):
+        shutil.rmtree(file)
+
+def start_container(gpu: int, id: int, num_scenes: int, asset_path: str):
+    """starts Isaac-Sim container with defined config
+
+    Args:
+        gpu (int): Index of GPU to run container on
+        id (int): Runtime-ID of container
+        num_scenes (int): number of scenes to be generated
+        asset_path (str): directory of assets for scene generation
+    """
+    os.system(f"echo 'Starting Isaac-Sim container: id {id}'")
+    os.system(f"./isaac-sim.docker.sh {gpu} {id} {num_scenes} {asset_path}")
+
+def print_gpus():
+    """prints available GPUs
+    """
+    pynvml.nvmlInit()
+    deviceCount = pynvml.nvmlDeviceGetCount()
+    for _ in range(deviceCount):
+        handle = pynvml.nvmlDeviceGetHandleByIndex(_)
+        name = pynvml.nvmlDeviceGetName(handle)
+        print(_, name)
+
+
+def query_gpu(threshold: float, used_gpus: int) -> int:
+    """Queries available GPUs and selects GPU to run job
+
+    Args:
+        threshold (float): GPU-usage threshold for selection
+        used_gpus (int): GPUs currently running scene sampler
+
+    Returns:
+        int: Index of GPU selected for job processing
+    """
+    pynvml.nvmlInit()
+    deviceCount = pynvml.nvmlDeviceGetCount()
+    for index in range(deviceCount):
+        handle = pynvml.nvmlDeviceGetHandleByIndex(index)
+        util = pynvml.nvmlDeviceGetUtilizationRates(handle)
+        mem = pynvml.nvmlDeviceGetMemoryInfo(handle)
+        print(util.gpu, util.memory)
+        if util.gpu < threshold and util.memory < threshold and index not in used_gpus:
+            return index
+    return False
+
+
+def get_gpu_count() -> int:
+    """Queries number of NVIDIA-GPUs available on current system
+
+    Returns:
+        int: number of visible NVIDIA-GPUs
+    """
+    pynvml.nvmlInit()
+    return pynvml.nvmlDeviceGetCount()
+
+
+if __name__ == "__main__":
+    main()
