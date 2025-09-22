@@ -152,7 +152,7 @@ class SimViewer(object):
 
         self.robot_orientations = [env.robot.get_local_pose()[1] for env in self.envs]
 
-        self.batch = 30
+        self.batch = 125
         self.controller = RobotController(
                                     name="collision_free_trajectory_generator",
                                     articulation=self.envs[0].articualtion,
@@ -160,7 +160,7 @@ class SimViewer(object):
                                     robot_orientations=self.robot_orientations,
                                     offset_position=np.array(self.base_work_position),
                                     batch=self.batch,
-                                    warmup=False,
+                                    warmup=True,
                                     robot_config=self.robot_config
                            )
         self.warmup = False
@@ -377,6 +377,7 @@ class SimViewer(object):
             panda_hand_prim = get_prim_at_path(path + "/franka/panda_hand/geometry/panda_hand")
             panda_link0 = get_prim_at_path(path + "/franka/panda_link0/geometry/panda_link0")
             panda_link1 = get_prim_at_path(path + "/franka/panda_link1/geometry/panda_link1")
+            panda_link2 = get_prim_at_path(path + "/franka/panda_link2/geometry/panda_link2")
             panda_link7 = get_prim_at_path(path + "/franka/panda_link7/geometry/panda_link7")
 
             # set hullVertexLimit and maxConvexHulls
@@ -403,6 +404,7 @@ class SimViewer(object):
             # disable collision
             panda_link0.GetAttribute('physics:collisionEnabled').Set(False)
             panda_link1.GetAttribute('physics:collisionEnabled').Set(False)
+            panda_link2.GetAttribute('physics:collisionEnabled').Set(False)
             panda_link7.GetAttribute('physics:collisionEnabled').Set(False)
             panda_hand_prim.GetAttribute('physics:collisionEnabled').Set(False)
 
@@ -571,6 +573,8 @@ class SimViewer(object):
         #! Plan or load trajectorys
         if self.cmd_plan is None:
             self._next_scene = False
+            
+            loaded_ok = False
 
             if self.load_trajectorys:
                 try:
@@ -590,10 +594,11 @@ class SimViewer(object):
                     for i in all_envs[n_graps[0]:]:
                         self.envs[i].set_env_state(Environment.State.IDLE)
 
+                    loaded_ok = False
                 except Exception as e:
                     print(f"Fehler beim Laden der Trajektorien: {e}")
 
-            if not self.load_trajectorys or 'e' in locals():
+            if not loaded_ok:
                 self.update_obstacle_world()
                 print(f"Scene: {len(self.scene_paths)}/{self.scene_path_idx+1}")
                 self.cmd_plan, self.succ_idx = self.controller.plan(
@@ -900,7 +905,7 @@ class SimViewer(object):
                 self.environment_scheduler = EnvironmentScheduler(envs=self.envs, start_id=self.obj_id)
 
                 self._next_scene = True
-                self.load_trajectorys = False
+                self.load_trajectorys = True
 
                 print(f"Scene: {len(self.scene_paths)}/{self.scene_path_idx+1}")
 
