@@ -51,26 +51,28 @@ def _ignore_torch_cuda_oom():
 
 def get_scene_paths(base_directory: str, indices: str = "") -> list:
     """
-    Returns paths to 'scene.yaml' files in the base_directory.
-    Indices can be e.g. '0-5' (range) or '1,3,5' (specific indices).
+    Gibt Pfade zu 'scene.yaml' im base_directory zurück.
+    Szenen mit bereits vorhandener 'dataset.json' im selben Ordner werden übersprungen.
+    Indices: '0-5' (Bereich) oder '1,3,5' (spezifische Indizes).
     """
     scene_paths = [
         os.path.join(root, 'scene.yaml')
         for root, dirs, files in os.walk(base_directory)
-        if 'scene.yaml' in files
+        if 'scene.yaml' in files and 'dataset.json' not in files
     ]
 
     if indices:
-        # Range (e.g. 1-5)
+        # Bereich (z. B. 1-5)
         match = re.match(r"^\s*(\d+)\s*-\s*(\d+)\s*$", indices)
         if match:
             start, end = map(int, match.groups())
             return scene_paths[start:end]
-        # Specific indices (e.g. 1,3,5)
+        # Spezifische Indizes (z. B. 1,3,5)
         elif re.match(r"^\s*\d+(?:\s*,\s*\d+)*\s*$", indices):
             idx_list = [int(i.strip()) for i in indices.split(",")]
             return [scene_paths[i] for i in idx_list if 0 <= i < len(scene_paths)]
         else:
-            raise ValueError("Invalid format. Allowed: 'start-end' or 'i1,i2,...'.")
+            raise ValueError("Ungültiges Format. Erlaubt: 'start-end' oder 'i1,i2,...'.")
     else:
         return scene_paths
+    

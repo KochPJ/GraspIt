@@ -33,4 +33,4 @@ echo "ISAAC_SIM_VERSION: $isaac_sim_version"
 echo "IMAGE_TAG: $image_tag"
 echo "DOCKERFILE: $dockerfile"
 
-docker build --build-arg ISAAC_SIM_VERSION="$isaac_sim_version" -t curobo_docker:"$image_tag" -f "$dockerfile" .
+docker build --build-arg ISAAC_SIM_VERSION="$isaac_sim_version" -t graspsim:"$image_tag" -f "$dockerfile" .

@@ -230,7 +230,7 @@ class RobotController(object):
         """
         
         if isinstance(ik_goals, Pose):
-            ik_goal =  [ik_goal]
+            ik_goal =  [ik_goals]
 
         if joints_state is None:
             joints_state = self.articulation.get_joints_state()

@@ -1,6 +1,9 @@
 import argparse
 
 
+# Scene: 100/6
+# Object: 18/8
+
 def options():
     parser = argparse.ArgumentParser()
 
@@ -14,7 +17,7 @@ def options():
     parser.add_argument(
         "-sp",
         "--scene_paths",
-        default="/share/scenes_3",
+        default="/share/scenes_4",
         type=str,
         help="Paths to scenes."
     )
