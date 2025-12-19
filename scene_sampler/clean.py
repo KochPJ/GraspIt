@@ -10,7 +10,7 @@ import argparse
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Cleanup-Helper for Scene-Sampler output")
-    parser.add_argument("--mode", choices=["clean_dataset", "merge_dataset"])
+    parser.add_argument("--mode", choices=["clean_dataset", "merge_dataset", "add_grasps"])
 
     return parser.parse_args()
 
@@ -58,68 +58,114 @@ def parse_intrinsics_from_projection(P, w, h, cameraAperture, cameraApertureOffs
 def clean_new_scenes():
     """Cleans up temporary directorys used by containers and generates complete dateset
     """
-    index = 0
-    for batch in os.listdir("temp"):
-        for scene in os.listdir(os.path.join("temp", batch)):
-            scene_path = os.path.join("temp", batch, scene)
-            print(f"cleaning scene: {scene_path}")
-            path = os.path.join("dataset", "scene_{}".format(index))
-            
+    if "0_temp" not in os.listdir("temp"):
+        for scene in os.listdir("temp"):
+                scene_path = os.path.join("temp", scene)
+                index = scene.split("_")[-1]
+                print(f"cleaning scene: {scene_path}")
+                path = os.path.join("dataset", "scene_{}".format(index))
+                
 
-            #computes numbers in format output by Isaac-Sim replicator
-            num_frames = len(os.listdir(scene_path)) // 5
-            numbers = []
-            for _ in range(num_frames):
-                number = "{}".format(_)
-                while len(number) < 4:
-                    number = "0" + number
-                numbers.append(number)
-            
-            #setting up dataset directory
-            os.makedirs(path, exist_ok=False)
-            batch_index = batch.split("_")[0]
-            scene_index = scene.split("_")[0]
-            yaml_path = f"out/yaml/{batch_index}_yaml/{scene_index}.yaml"
-            move(yaml_path, os.path.join(path, "scene.yaml"))
+                #computes numbers in format output by Isaac-Sim replicator
+                num_frames = len(os.listdir(scene_path)) // 5
+                numbers = []
+                for _ in range(num_frames):
+                    number = "{}".format(_)
+                    while len(number) < 4:
+                        number = "0" + number
+                    numbers.append(number)
 
-            #scene-wise moving of output
-            for _index, number in enumerate(numbers):
-                frame_path = os.path.join(path, f"frame_{_index}")
-                os.makedirs(frame_path, exist_ok=True)
+                #scene-wise moving of output
+                for _index, number in enumerate(numbers):
+                    frame_path = os.path.join(path, f"frame_{_index}")
+                    os.makedirs(frame_path, exist_ok=True)
 
-                cam_params = "camera_params_{}.json".format(number)
-                depth =  "distance_to_image_plane_{}.npy".format(number)
-                rgb = "rgb_{}.png".format(number)
-                mask = "semantic_segmentation_{}.png".format(number)
-                mask_label = "semantic_segmentation_labels_{}.json".format(number)
+                    cam_params = "camera_params_{}.json".format(number)
+                    depth =  "distance_to_image_plane_{}.npy".format(number)
+                    rgb = "rgb_{}.png".format(number)
+                    mask = "semantic_segmentation_{}.png".format(number)
+                    mask_label = "semantic_segmentation_labels_{}.json".format(number)
 
-                mod_params(os.path.join(scene_path, cam_params), os.path.join(frame_path, cam_params))
-                move(os.path.join(scene_path, rgb), os.path.join(frame_path, rgb))
-                move(os.path.join(scene_path, mask), os.path.join(frame_path, mask))
-                move(os.path.join(scene_path, mask_label), os.path.join(frame_path, mask_label))
+                    mod_params(os.path.join(scene_path, cam_params), os.path.join(frame_path, cam_params))
+                    move(os.path.join(scene_path, rgb), os.path.join(frame_path, rgb))
+                    move(os.path.join(scene_path, mask), os.path.join(frame_path, mask))
+                    move(os.path.join(scene_path, mask_label), os.path.join(frame_path, mask_label))
 
-                depth_image = np.load(os.path.join(scene_path, depth))
-                depth_image[depth_image< 0] = 0
-                depth_image[depth_image > 65000/5000] = 0
-                depth_image = depth_image*5000
+                    depth_image = np.load(os.path.join(scene_path, depth))
+                    depth_image[depth_image< 0] = 0
+                    depth_image[depth_image > 65000/5000] = 0
+                    depth_image = depth_image*5000
 
-                depth = np.array(depth_image, dtype=np.uint16)
-                depth = Image.fromarray(depth)
-                depth.save(os.path.join(frame_path, "depth.png"))
-            
-            index += 1
+                    depth = np.array(depth_image, dtype=np.uint16)
+                    depth = Image.fromarray(depth)
+                    depth.save(os.path.join(frame_path, "depth.png"))
+                
+    else:
+        index = 0
+        for batch in os.listdir("temp"):
+            for scene in os.listdir(os.path.join("temp", batch)):
+                scene_path = os.path.join("temp", batch, scene)
+                print(f"cleaning scene: {scene_path}")
+                path = os.path.join("dataset", "scene_{}".format(index))
+                
 
+                #computes numbers in format output by Isaac-Sim replicator
+                num_frames = len(os.listdir(scene_path)) // 5
+                numbers = []
+                for _ in range(num_frames):
+                    number = "{}".format(_)
+                    while len(number) < 4:
+                        number = "0" + number
+                    numbers.append(number)
+                
+                #setting up dataset directory
+                os.makedirs(path, exist_ok=False)
+                batch_index = batch.split("_")[0]
+                scene_index = scene.split("_")[0]
+                yaml_path = f"out/yaml/{batch_index}_yaml/{scene_index}.yaml"
+                move(yaml_path, os.path.join(path, "scene.yaml"))
+
+                #scene-wise moving of output
+                for _index, number in enumerate(numbers):
+                    frame_path = os.path.join(path, f"frame_{_index}")
+                    os.makedirs(frame_path, exist_ok=True)
+
+                    cam_params = "camera_params_{}.json".format(number)
+                    depth =  "distance_to_image_plane_{}.npy".format(number)
+                    rgb = "rgb_{}.png".format(number)
+                    mask = "semantic_segmentation_{}.png".format(number)
+                    mask_label = "semantic_segmentation_labels_{}.json".format(number)
+
+                    mod_params(os.path.join(scene_path, cam_params), os.path.join(frame_path, cam_params))
+                    move(os.path.join(scene_path, rgb), os.path.join(frame_path, rgb))
+                    move(os.path.join(scene_path, mask), os.path.join(frame_path, mask))
+                    move(os.path.join(scene_path, mask_label), os.path.join(frame_path, mask_label))
+
+                    depth_image = np.load(os.path.join(scene_path, depth))
+                    depth_image[depth_image< 0] = 0
+                    depth_image[depth_image > 65000/5000] = 0
+                    depth_image = depth_image*5000
+
+                    depth = np.array(depth_image, dtype=np.uint16)
+                    depth = Image.fromarray(depth)
+                    depth.save(os.path.join(frame_path, "depth.png"))
+                
+                index += 1
 
     print("==========================")
     print("finished dataset generation, cleaning up...")
     print("==========================")
 
-    for file in glob.glob("temp/*"):
-        shutil.rmtree(file)
-    for file in glob.glob("out/scenes/*"):
-        shutil.rmtree(file)
-    for file in glob.glob("out/yaml/*"):
-        shutil.rmtree(file)
+    #for file in glob.glob("temp/*"):
+    #    shutil.rmtree(file)
+    #for file in glob.glob("out/scenes/*"):
+    #    shutil.rmtree(file)
+    #for file in glob.glob("out/yaml/*"):
+    #    shutil.rmtree(file)
+    
+def add_grasps_to_scenes():
+    for scene in os.listdir("dataset"):
+        print(scene)
 
 def merge_dataset(source, target):
     max_count = max([element.split("_")[-1] for element in os.listdir(source)])
@@ -138,3 +184,5 @@ if __name__ == "__main__":
         target = os.path.join("/mnt/4TBSSD/synthetic_data/share", target)
 
         print(source, target)
+    elif args.mode == "add_grasps":
+        add_grasps_to_scenes()

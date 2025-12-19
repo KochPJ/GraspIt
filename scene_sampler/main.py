@@ -218,12 +218,6 @@ def clean_new_scenes():
 
             #computes numbers in format output by Isaac-Sim replicator
             num_frames = len(os.listdir(scene_path)) // 5
-            numbers = []
-            for _ in range(num_frames):
-                number = "{}".format(_)
-                while len(number) < 4:
-                    number = "0" + number
-                numbers.append(number)
             
             #setting up dataset directory
             os.makedirs(path, exist_ok=False)
@@ -233,7 +227,8 @@ def clean_new_scenes():
             move(yaml_path, os.path.join(path, "scene.yaml"))
 
             #scene-wise moving of output
-            for _index, number in enumerate(numbers):
+            for _index in range(num_frames):
+                number = f"{_index:04d}"
                 frame_path = os.path.join(path, f"frame_{_index}")
                 os.makedirs(frame_path, exist_ok=True)
 
@@ -283,10 +278,8 @@ def add_frames_to_dataset(mode, dataset, num_views):
             for _ in range(max_frame + 1, max_frame + num_views + 1):
                 end_number = "{}".format(_)
                 temp_number = "{}".format(_ - (max_frame + 1))
-                while len(end_number) < 4:
-                    end_number = "0"+ end_number
-                while len(temp_number) < 4:
-                    temp_number = "0" + temp_number
+                end_number = f"{end_number:04d}"
+                temp_number = f"{temp_number:04d}"
                 end_numbers.append(end_number)
                 temp_numbers.append(temp_number)
         
@@ -326,19 +319,14 @@ def replace_images():
 
         #computes numbers in format output by Isaac-Sim replicator
         num_frames = len(os.listdir(scene_path)) // 5
-        numbers = []
-        for _ in range(num_frames):
-            number = "{}".format(_)
-            while len(number) < 4:
-                number = "0" + number
-            numbers.append(number)
-        
+
         #setting up dataset directory
         os.makedirs(path, exist_ok=True)
         scene_index = scene.split("_")[0]
 
         #scene-wise moving of output
-        for _index, number in enumerate(numbers):
+        for _index in range(num_frames):
+            number = f"{_index:04d}"
             frame_path = os.path.join(path, f"frame_{_index}")
             os.makedirs(frame_path, exist_ok=True)
 
@@ -376,7 +364,7 @@ def start_scene_sampler(gpu: int, id: int, num_scenes: int, asset_path: str):
         asset_path (str): directory of assets for scene generation
     """
     os.system(f"echo 'Starting Isaac-Sim container: id {id}'")
-    os.system(f"./isaac-sim.docker.sh {gpu} {id} {num_scenes} {asset_path} {10}")
+    os.system(f"./isaac-sim.docker.sh {gpu} {id} {num_scenes} {asset_path} {256}")
 
 def start_scene_mod(gpu: int, num_views: int, asset_path: str, dataset: str, mode: str, id: int):
     """Addes frames to existing datasets created with scene_sampler

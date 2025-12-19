@@ -40,7 +40,7 @@ class Scene():
 
         names = []
 
-        tables = ["Danny.usd", "Appleseed_CoffeeTable.usd", "Dellwood_DiningTable.usd", "EastRural_Table.usd", "Make.usd",
+        tables = ["Danny.usd", "Appleseed_CoffeeTable.usd", "EastRural_Table.usd", "Make.usd",
                   "Midtown.usd", "OakTableSmall.usd", "Roxana_CoffeeTable.usd", "Roxana_DiningTable.usd", "Willow.usd"]
 
         # table_usd = get_table_usd()
@@ -81,9 +81,12 @@ class Scene():
         positions = {}
         scales = {}
 
-        table_usd = data_dict["table"]["file_path"]
+        table_usd = data_dict["table"]["file_path"].rstrip(".obj") + ".usd"
+        print(table_usd)
         _ = create_prim(prim_path=work_path + "/" + "table", usd_path=table_usd, scale=[0.01])
         for key in data_dict.keys():
+            if key == "grasp_path":
+                continue
             if key != "table":
                 name = data_dict[key]["name"]
                 usd_path = data_dict[key]["file_path"]
