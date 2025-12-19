@@ -56,6 +56,14 @@ def options():
                         help="Index range of scenes, e.g. '0-5' for a range or '1,3,5' for specific indices."
     )
 
+    parser.add_argument(
+                        "-show",
+                        "--show",
+                        default=False,
+                        type=bool,
+                        help="Index range of scenes, e.g. '0-5' for a range or '1,3,5' for specific indices."
+    )
+
     arguments = parser.parse_args()
     
     return arguments
@@ -78,7 +86,8 @@ if __name__ == '__main__':
             continue
          
         scene = Scene.from_dict(dic)
-        #scene.show()
+        if args.show:
+            scene.show()
         sampler = GraspSampler(args, scene, scene_path_yml=path)
         sampler.sample()
         del scene
