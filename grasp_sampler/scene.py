@@ -51,6 +51,7 @@ class Scene(Sequence):
         self.scene_mesh.visual.kind == 'face'
 
         self.scene_viewer.add_geometry(self.scene_mesh)
+        #self.scene_viewer.add_geometry(self.table.mesh)
 
     def add(self, obj: Object) -> str:
         """

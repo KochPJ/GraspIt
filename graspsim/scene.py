@@ -97,19 +97,23 @@ class Scene(XFormPrim):
         
         table_usd = get_table_usd()
         # table_usd = data_dict["object0"]["file_path"]
-        _ = create_prim(prim_path=work_path + scene_path + "/" + "table", usd_path=table_usd, scale=[0.01])
+        #_ = create_prim(prim_path=work_path + scene_path + "/" + "table", usd_path=table_usd, scale=[0.01])
 
         # load yaml
         for key in data_dict.keys():
             if key == "grasp_path":
                 grasp_path = data_dict[key]
+            elif "table" in key:
+                file_path_usd = data_dict[key]["file_path"][:-4] 
+                scale = data_dict[key]['scale']
+                _ = create_prim(prim_path=work_path + scene_path + "/" + "table", usd_path=file_path_usd + ".usd", scale=scale)
+
             elif "object" in key and key != "table":
                 file_path_usd = data_dict[key]["file_path"]
                 name = data_dict[key]['name']
                 orientation = data_dict[key]['orientation']
                 position = data_dict[key]['position']
                 scale = data_dict[key]['scale']
-
                 _ = create_prim(prim_path=work_path + scene_path +"/" + name,
                                 usd_path=file_path_usd,  # "file:../" + file_path_usd,
                                 orientation=orientation,

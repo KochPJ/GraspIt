@@ -17,7 +17,7 @@ def options():
     parser.add_argument(
         "-sp",
         "--scene_paths",
-        default="/share/scenes_4",
+        default="/share/scenes_9",
         type=str,
         help="Paths to scenes."
     )
@@ -61,7 +61,6 @@ def main():
     root_path = "/World/Workstation"
 
     scene_paths = get_scene_paths(args.scene_paths, args.indices)
-    print(scene_paths)
 
     viewer = SimViewer(
         world=world, scene_paths=scene_paths, root_path=root_path, robot_config=args.robot_config

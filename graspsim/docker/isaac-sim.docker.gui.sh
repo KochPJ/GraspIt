@@ -49,7 +49,7 @@ echo "Pulling docker image..."
 
 echo "Running Isaac Sim container with X11 forwarding..."
 xhost +
-docker run --name graspsim_container --entrypoint /bin/sh -it --gpus "device=1" -e "ACCEPT_EULA=${accept_eula}" --rm --network=host \
+docker run --name graspsim_container2 --entrypoint /bin/sh -it --gpus "device=1" -e "ACCEPT_EULA=${accept_eula}" --rm --network=host \
 	-v $HOME/.Xauthority:/root/.Xauthority \
 	-e DISPLAY \
 	-e "OMNI_USER=${omni_user}" -e "OMNI_PASS=${omni_password}" \
