@@ -39,8 +39,8 @@ if ! [[ -z "${PRIVACY_USERID}" ]]; then
 fi
 
 # Weitere Pfade
-graspsim_path="/home/karaadem/git/OptiSim/graspsim"
-scene_path="/mnt/4TBSSD/synthetic_data/share"
+graspsim_path="/home/kochpaul/git/OptiSim/graspsim"
+scene_path="/mnt/kikerp/OptiSim"
 
 # Docker- und Skript-Konfiguration
 CONTAINER_NAME="graspsim_container1"
@@ -48,7 +48,7 @@ IMAGE_NAME="graspsim"
 WORKDIR="/graspsim"  # Arbeitsverzeichnis im Container
 PYTHON_EXEC="omni_python"  # Python-Interpreter oder Wrapper
 PYTHON_SCRIPT="graspsim.py"  # Python-Skript
-PYTHON_PARAMS='-i "0-50" -r robot_configs/config.toml'  # Parameter für das Python-Skript
+PYTHON_PARAMS='-i "0-100" -r robot_configs/config.toml'  # Parameter für das Python-Skript
 RETRY_LIMIT=10  # Maximale Anzahl von Neustart-Versuchen
 RETRY_COUNT=0  # Aktueller Zähler von Neustart-Versuchen
 

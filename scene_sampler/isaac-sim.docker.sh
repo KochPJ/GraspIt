@@ -40,6 +40,10 @@ if ! [[ -z "${PRIVACY_USERID}" ]]; then
 	privacy_userid="${PRIVACY_USERID}"
 fi
 
+
+CALLER_DIR="$(pwd -P)"
+
+
 echo "Running Isaac Sim container..."
 docker run --gpus device=$gpu_index  -e "ACCEPT_EULA=${accept_eula}" --rm --network=host --runtime=nvidia\
 	-e "OMNI_USER=${omni_user}" -e "OMNI_PASS=${omni_password}" \
@@ -58,7 +62,7 @@ docker run --gpus device=$gpu_index  -e "ACCEPT_EULA=${accept_eula}" --rm --netw
 	-v ~/docker/isaac-sim/config:/root/.nvidia-omniverse/config:rw \
 	-v ~/docker/isaac-sim/data:/root/.local/share/ov/data:rw \
 	-v ~/docker/isaac-sim/documents:/root/Documents:rw \
-	-v ~/OptiSim/scene_sampler:/omniverse:rw \
+	-v $CALLER_DIR:/omniverse:rw \
 	-v $asset_path:/share:rw \
 	scene_gen:latest
 

@@ -207,13 +207,13 @@ def parse_intrinsics_from_projection(P, w, h, cameraAperture, cameraApertureOffs
 def clean_new_scenes():
     """Cleans up temporary directorys used by containers and generates complete dateset
     """
-    shutil.rmtree("dataset")
-    os.makedirs("dataset", exist_ok=False)
+    shutil.rmtree("/dataset")
+    os.makedirs("/dataset", exist_ok=False)
     index = 0
     for batch in os.listdir("temp"):
         for scene in os.listdir(os.path.join("temp", batch)):
             scene_path = os.path.join("temp", batch, scene)
-            path = os.path.join("dataset", "scene_{}".format(index))
+            path = os.path.join("/dataset", "scene_{}".format(index))
             
 
             #computes numbers in format output by Isaac-Sim replicator
@@ -314,7 +314,7 @@ def replace_images():
     index = 0
     for scene in os.listdir("temp"):
         scene_path = os.path.join("temp", scene)
-        path = os.path.join("dataset", "scene_{}".format(index))
+        path = os.path.join("/dataset", "scene_{}".format(index))
         
 
         #computes numbers in format output by Isaac-Sim replicator

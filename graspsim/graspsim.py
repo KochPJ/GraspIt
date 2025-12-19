@@ -17,7 +17,7 @@ def options():
     parser.add_argument(
         "-sp",
         "--scene_paths",
-        default="/share/scenes_9",
+        default="/share/scenes_10",
         type=str,
         help="Paths to scenes."
     )
