@@ -19,7 +19,14 @@ class Object(object):
         #if not file_path.startswith('/'):
         #    file_path = '/' + file_path
         #    print(file_path)
-        
+
+        if not file_path.endswith('.obj'):
+            if '.' not in file_path:
+                file_path = file_path+'.obj'
+            else:
+                file_path = file_path.split('.')
+                file_path[-1] = 'obj'
+                file_path = '.'.join(file_path)
 
         try:
             self.mesh = trimesh.load(file_path)
