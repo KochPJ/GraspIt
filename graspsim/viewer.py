@@ -57,7 +57,6 @@ class SimViewer(object):
             self.scene_roots.append(root)
 
         self.scene_path_idx = 0
-        self.scene_path_idx = 0
         self.root_path = root_path
 
         self.robot_config = {}
@@ -152,7 +151,7 @@ class SimViewer(object):
 
         self.robot_orientations = [env.robot.get_local_pose()[1] for env in self.envs]
 
-        self.batch = 125
+        self.batch = 100
         self.controller = RobotController(
                                     name="collision_free_trajectory_generator",
                                     articulation=self.envs[0].articualtion,
@@ -264,13 +263,15 @@ class SimViewer(object):
                               collision=True,
                               rigid_body_physics=False,
                               approximation=None,
-                              use_visual_material=False,
-                              use_physics_material=False)
+                              use_visual_material=True,
+                              use_physics_material=True)
         
         for name in base_scene.names:
             objects.append(DynamicObject(prim_path=self.target_paths[0] + scene_path + "/" + name,
                            name=name + "_0",
-                           color=np.random.rand(1, 3)))
+                           color=np.random.rand(1, 3),
+                              use_visual_material=True,
+                              use_physics_material=True))
             
         base_scene.objects = objects
         base_scene.table = table
@@ -303,13 +304,15 @@ class SimViewer(object):
                                   collision=True,
                                   rigid_body_physics=False,
                                   approximation=None,
-                                  use_visual_material=False,
-                                  use_physics_material=False)
+                                  use_visual_material=True,
+                                  use_physics_material=True)
             
             for name in base_scene.names:
                 objects.append(DynamicObject(prim_path=path + scene_path + "/" + name,
                                name=name + "_" + str(i+1), 
-                               color=np.random.rand(1, 3)))
+                               color=np.random.rand(1, 3),
+                              use_visual_material=True,
+                              use_physics_material=True))
 
             scene = Scene(objects=objects,
                           table=table,
@@ -378,6 +381,9 @@ class SimViewer(object):
             panda_link0 = get_prim_at_path(path + "/franka/panda_link0/geometry/panda_link0")
             panda_link1 = get_prim_at_path(path + "/franka/panda_link1/geometry/panda_link1")
             panda_link2 = get_prim_at_path(path + "/franka/panda_link2/geometry/panda_link2")
+            panda_link3 = get_prim_at_path(path + "/franka/panda_link3/geometry/panda_link3")
+            panda_link4 = get_prim_at_path(path + "/franka/panda_link4/geometry/panda_link4")
+            panda_link5 = get_prim_at_path(path + "/franka/panda_link5/geometry/panda_link5")
             panda_link7 = get_prim_at_path(path + "/franka/panda_link7/geometry/panda_link7")
 
             # set hullVertexLimit and maxConvexHulls
@@ -405,6 +411,9 @@ class SimViewer(object):
             panda_link0.GetAttribute('physics:collisionEnabled').Set(False)
             panda_link1.GetAttribute('physics:collisionEnabled').Set(False)
             panda_link2.GetAttribute('physics:collisionEnabled').Set(False)
+            panda_link3.GetAttribute('physics:collisionEnabled').Set(False)
+            panda_link4.GetAttribute('physics:collisionEnabled').Set(False)
+            panda_link5.GetAttribute('physics:collisionEnabled').Set(False)
             panda_link7.GetAttribute('physics:collisionEnabled').Set(False)
             panda_hand_prim.GetAttribute('physics:collisionEnabled').Set(False)
 
@@ -594,7 +603,7 @@ class SimViewer(object):
                     for i in all_envs[n_graps[0]:]:
                         self.envs[i].set_env_state(Environment.State.IDLE)
 
-                    loaded_ok = False
+                    loaded_ok = True
                 except Exception as e:
                     print(f"Fehler beim Laden der Trajektorien: {e}")
 
@@ -664,7 +673,8 @@ class SimViewer(object):
                 all_envs = list(range(self.n_env))
                 for i in all_envs[len(state):]:
                     self.envs[i].set_env_state(Environment.State.IDLE)
-
+            
+            print("Path: ", self.scene_paths[self.scene_path_idx])
             print(f"Scene: {len(self.scene_paths)}/{self.scene_path_idx+1}")
             print(f"Object: {self.n_obj}/{self.obj_id+1}")
             env_states = [env.get_env_state().name for env in self.envs]

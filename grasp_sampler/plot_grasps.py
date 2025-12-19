@@ -20,7 +20,7 @@ def inverse(matrix) -> np.ndarray:
 
 
 if __name__ == '__main__':
-    scene_path = "/share/scenes_3/scene_10/scene.yaml"
+    scene_path = "/share/scenes_8/scene_74/scene.yaml"
     yaml_params = load_yaml(scene_path)
 
     scene = Scene.from_dict(yaml_params)
@@ -39,7 +39,7 @@ if __name__ == '__main__':
                 grasp.append(t2)
             random.shuffle(grasp)
             grasp_all.append(grasp)
-
+    
     for ga in grasp_all:
         for i, t in enumerate(ga):
             center = t[:3, 3].copy()
@@ -51,7 +51,7 @@ if __name__ == '__main__':
             translation[:3, 3:] = np.transpose([(-gripper.gripper_total_length+gripper.marker_radius) * approach_vector])
             gripper.transform(translation)
             
-            if i <= 5:
+            if i <= 10:
                 gripper.marker.visual.face_colors = [0, 255, 0]
                 scene.add(gripper.marker.copy())
                 

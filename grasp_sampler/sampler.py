@@ -149,15 +149,18 @@ class GraspSampler(object):
 
                                             p = trimesh.PointCloud([center])
                                             name_p1 = self.scene.add(p)
-                                            f = trimesh.load_path([center, center + 0.1 * orientation_vector])
+                                            f = trimesh.load_path([p1, p1 + 0.01 * n1])
                                             name_p2 = self.scene.add(f)
+                                            f = trimesh.load_path([p2, p2 + 0.01 * n2])
+                                            name_p3 = self.scene.add(f)
 
                                             self.scene.show()
                                             
                                             self.scene.delete(name_gripper)
                                             self.scene.delete(name_p1)
                                             self.scene.delete(name_p2)
-                                            
+                                            self.scene.delete(name_p3)
+
                                 # set the gripper position to the initial position
                                 t_inv = self._inverse(t)
                                 self.gripper.transform(t_inv)

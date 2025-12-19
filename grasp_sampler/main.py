@@ -71,10 +71,14 @@ if __name__ == '__main__':
     for i, path in enumerate(scene_paths):
         print("Path: ", path)
         print(f"Scene: {len(scene_paths)}/{i+1}")
-
-        scene = Scene.from_dict(load_yaml(path))
+#
+        dic = load_yaml(path)
+        if dic["table"]["name"] == "Dellwood_DiningTable":
+            print(path)
+            continue
+         
+        scene = Scene.from_dict(dic)
         #scene.show()
         sampler = GraspSampler(args, scene, scene_path_yml=path)
         sampler.sample()
-        
         del scene

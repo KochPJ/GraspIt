@@ -58,21 +58,35 @@ def get_scene_paths(base_directory: str, indices: str = "") -> list:
     scene_paths = [
         os.path.join(root, 'scene.yaml')
         for root, dirs, files in os.walk(base_directory)
-        if 'scene.yaml' in files and 'dataset.json' not in files
+        if 'scene.yaml' in files
+            # and 'dataset.json' not in files
     ]
 
+    scene_paths = sorted(scene_paths, key=lambda x: int(x.split('/')[3].split('_')[1]))
+    
     if indices:
         # Bereich (z. B. 1-5)
         match = re.match(r"^\s*(\d+)\s*-\s*(\d+)\s*$", indices)
         if match:
             start, end = map(int, match.groups())
-            return scene_paths[start:end]
+            scene_paths = scene_paths[start:end]
         # Spezifische Indizes (z. B. 1,3,5)
         elif re.match(r"^\s*\d+(?:\s*,\s*\d+)*\s*$", indices):
             idx_list = [int(i.strip()) for i in indices.split(",")]
-            return [scene_paths[i] for i in idx_list if 0 <= i < len(scene_paths)]
+            scene_paths = [scene_paths[i] for i in idx_list if 0 <= i < len(scene_paths)]
         else:
             raise ValueError("Ungültiges Format. Erlaubt: 'start-end' oder 'i1,i2,...'.")
-    else:
-        return scene_paths
-    
+
+    filtered_scene_paths = []
+
+    for path in scene_paths:
+        directory = os.path.dirname(path)
+        dataset_json_path = os.path.join(directory, 'dataset.json')
+        if not os.path.exists(dataset_json_path):
+            filtered_scene_paths.append(path)
+
+    print("Szenenpfade")
+    print(filtered_scene_paths)
+
+    scene_paths = filtered_scene_paths
+    return scene_paths

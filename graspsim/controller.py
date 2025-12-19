@@ -79,7 +79,7 @@ class RobotController(object):
             num_trajopt_seeds=12,
             num_graph_seeds=32,
             interpolation_dt=0.01,
-            collision_cache={"obb": 1, "mesh": 15},
+            collision_cache={"obb": 1, "mesh": 25},
             optimize_dt=True,
             trajopt_dt=None,
             trajopt_tsteps=32,
