@@ -15,8 +15,6 @@ from omni.isaac.core.utils.bounds import compute_aabb, create_bbox_cache
 from omni.isaac.core.utils.rotations import euler_angles_to_quat
 
 from omni.isaac.cloner import GridCloner
-from utils import get_current_stage
-
 from pxr import Usd, UsdGeom, Gf
 import omni.isaac.core.utils.prims as prims_utils
 import omni.replicator.core as rep
@@ -37,7 +35,13 @@ from typing import Dict
 
 
 class Viewer(object):
-    def __init__(self, world: omni.isaac.core.World, scene: Scene, root_path: str, mode: str) -> None:
+    def __init__(
+            self,
+            world: omni.isaac.core.World,
+            scene: Scene,
+            root_path: str,
+            mode: str,
+            ) -> None:
         """Constructor for synthetic scene viewer
 
         Args:
@@ -53,6 +57,7 @@ class Viewer(object):
         self.names = set(scene.names)
         self.base_scene = scene
         self.scenes: List[Scene] = [scene]
+        self.table: str = None
         self.check_flag: bool = False  
         self.step_time: float = 0.0
         self.plane_z: float = 0.0
@@ -66,8 +71,8 @@ class Viewer(object):
         self.lookup: Dict = {}
         
         self.setup_physics_context()
-        if mode == "custom":
-            self.setup_custom()
+        if mode == "add_images":
+            self.add_images_setup()
         else:
             self.setup_scene()
 
@@ -108,7 +113,7 @@ class Viewer(object):
         """
         self.world.scene.add_default_ground_plane()
 
-        stage = get_current_stage()
+        stage = omni.usd.get_context().get_stage()
         unit = UsdGeom.LinearUnits.meters
         UsdGeom.SetStageMetersPerUnit(stage, unit)
         
@@ -159,7 +164,6 @@ class Viewer(object):
             if _max in [0.1, 1]:
                 _object = DynamicObject(prim_path=self.scenes[0].work_path + "/" + name,
                                        name=name,
-                                       #color=np.random.rand(1, 3),
                                        translation=translation,
                                        orientation=orientation,
                                        scale = [1.0, 1.0, 1.0])
@@ -167,7 +171,6 @@ class Viewer(object):
             elif _max > 1:
                 _object = DynamicObject(prim_path=self.scenes[0].work_path + "/" + name,
                                        name=name,
-                                       #color=np.random.rand(1, 3),
                                        translation=translation,
                                        orientation=orientation,
                                        scale = [1 / _max, 1 / _max, 1 / _max])
@@ -175,7 +178,6 @@ class Viewer(object):
             else:
                 _object = DynamicObject(prim_path=self.scenes[0].work_path + "/" + name,
                                    name=name,
-                                   #color=np.random.rand(1, 3),
                                    translation=translation,
                                    orientation=orientation,
                                    scale = [5.0, 5.0, 5.0])
@@ -184,6 +186,44 @@ class Viewer(object):
             self.objects.append(_object)
             self.world.scene.add(_object)
         return
+    
+
+    def add_images_setup(self):
+        self.world.scene.add_default_ground_plane()
+
+        stage = omni.usd.get_context().get_stage()
+        unit = UsdGeom.LinearUnits.meters
+        UsdGeom.SetStageMetersPerUnit(stage, unit)
+
+        assert UsdGeom.GetStageMetersPerUnit(stage) == unit
+
+        self.objects = []
+        table = DynamicObject(prim_path=self.scenes[0].work_path + "/" + "table",
+                              name="table_0",
+                              collision=True,
+                              rigid_body_physics=False,
+                              approximation=None,
+                              use_visual_material=False,
+                              use_physics_material=False,
+                              scale=[0.01, 0.01, 0.01])
+        self.world.scene.add(table)
+        self.lookup["table"] = [0.01, 0.01, 0.01]
+
+        for name in self.scenes[0].names:
+            translation = self.scenes[0].positions[name]
+            orientation = self.scenes[0].orientations[name]
+            scale = self.scenes[0].scales[name]
+
+            _object = DynamicObject(prim_path=self.scenes[0].work_path + "/" + name,
+                                    name=name,
+                                    translation=translation,
+                                    orientation=orientation,
+                                    scale=scale)
+            self.lookup[name] = scale
+            self.objects.append(_object)
+            self.world.scene.add(_object)
+        return
+
     
     def save_scene(self, count: int, yaml_path: str):
         """generating .yaml file to save scene and enable later reloading
@@ -198,9 +238,12 @@ class Viewer(object):
         print("==========================================")
         scene_dict = {}
 
+        scene_table_name = self.scenes[0].table.split(".")[0]
+
+
         scene_dict["table"] = {}
-        scene_dict["table"]["name"] = "table"
-        scene_dict["table"]["file_path"] = "/share/assets/table/table.obj"
+        scene_dict["table"]["name"] = scene_table_name
+        scene_dict["table"]["file_path"] = f"/share/assets/{scene_table_name}/{scene_table_name}.usd"
         scene_dict["table"]["position"] = np.array([0.0, 0.0, 0.0]).tolist()
         scene_dict["table"]["orientation"] = np.array([0.0, 0.0, 0.0, 0.0]).tolist()
         scene_dict["table"]["scale"] = np.array([0.01, 0.01, 0.01]).tolist()

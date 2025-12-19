@@ -13,8 +13,10 @@ import glob
 import numpy as np
 from shutil import move
 import argparse
+import json
 from typing import *
 from PIL import Image
+import fnmatch
 
 
 def main() -> None:
@@ -26,6 +28,12 @@ def main() -> None:
     while True:
         print("Initializing multi-gpu scene-sampler")
         while True:
+            print("0: generate new scenes")
+            print("1: add frames to existing scenes")
+            mode = input().lower()
+            if mode == "1":
+                add_frames()
+                return
             print("Number of gpus currently available for sampling:")
             print_gpus()
             num_threads = int(input("Enter number of gpus for use:"))
@@ -70,7 +78,7 @@ def main() -> None:
     #handeling of exces batch in case number of scenes and batchsize are not divisable
     if exces_batch > 0:
         gpu = query_gpu(80.0, used_gpus)
-        thread = threading.Thread(target=start_container, args=(gpu, container_count, exces_batch))
+        thread = threading.Thread(target=start_scene_sampler, args=(gpu, container_count, exces_batch))
         threads[container_count] = (thread, gpu)
         thread.start()
         container_count += 1
@@ -84,7 +92,7 @@ def main() -> None:
             if gpu is False:
                 continue
             print("Selecting gpu {} for thread with id {}".format(gpu, container_count))
-            thread = threading.Thread(target=start_container, args=(gpu, container_count, batch_size, asset_path))
+            thread = threading.Thread(target=start_scene_sampler, args=(gpu, container_count, batch_size, asset_path))
             threads[container_count] = (thread, gpu)
             thread.start()
             print(used_gpus, threads)
@@ -108,12 +116,99 @@ def main() -> None:
         thread, gpu = threads[key]
         thread.join()
     
-    clean_dataset()
+    clean_new_scenes()
+
+def add_frames():
+    while True:
+        print("Adding frames to existing scenes, please enter path to dataset:")
+        dataset = input("")
+        if not os.path.exists(dataset):
+            print("Path does not exist, please enter valid path")
+            continue
+        print(f"adding views to: {dataset}")
+        print("0: Replace current frames")
+        print("1: Generate additional frames with new poses")
+        mode = input()
+        mode = "add_images" if mode == "1" else "replace_images"
+        
+        if mode == "add_images":
+            num_views = int(input("Enter number of added images: "))
+            asset_path = input("Enter path to assets to be loaded (Defaul: /share/)")
+            if asset_path == "":
+                asset_path = "/share/"
+            gpu = query_gpu(80.0, set())
+            thread = threading.Thread(
+                target=start_scene_mod,
+                args=(gpu, num_views, asset_path, dataset, mode, 0)
+            )
+            thread.start()
+            thread.join()
+        else:
+            num_views = int(input("Enter number of frames: "))
+            asset_path = input("Enter path to assets to be loaded (Defaul: /share/)")
+            if asset_path == "":
+                asset_path = "/share/"
+            gpu = query_gpu(80.0, set())
+            thread = threading.Thread(
+                target=start_scene_mod,
+                args=(gpu, num_views, asset_path, dataset, mode, 0)
+            )
+            thread.start()
+            thread.join()
+
+        break
+    
+    
+    if mode == "add_images":
+        add_frames_to_dataset(mode, dataset, num_views)
+    else:
+        replace_images()
+
+def mod_params(cam_path, final_path):
+    (w, h), (fx, fy, cx, cy), V_wc, meters_per_unit, cam_params = load_cam(cam_path)
+    cam_params["fx"] = fx
+    cam_params["fy"] = fy
+    cam_params["cx"] = cx
+    cam_params["cy"] = cy
+    cam_params["ViewTransformWorldCamera"] = [float(v) for v in V_wc.flatten()]
+    with open(final_path, "w+") as f:
+        json.dump(cam_params, f)
 
 
-def clean_dataset():
+def load_cam(cam_path):
+    with open(cam_path, "r") as f:
+        d = json.load(f)
+    w, h = d["renderProductResolution"]
+    P = np.array(d["cameraProjection"]).reshape(4, 4)
+    V = np.array(d["cameraViewTransform"]).reshape(4, 4).T
+    ang = np.deg2rad(180.0)
+    Rx = np.array([[1, 0, 0, 0],
+                   [0, np.cos(ang), -np.sin(ang), 0],
+                   [0, np.sin(ang), np.cos(ang), 0],
+                   [0, 0, 0, 1]], dtype=np.float64)
+    V = Rx @ V
+
+    cameraAperture = d["cameraAperture"]
+    cameraApertureOffset = d["cameraApertureOffset"]
+    focal_length =  d["cameraFocalLength"]
+
+    fx, fy, cx, cy = parse_intrinsics_from_projection(P, w, h, cameraAperture, cameraApertureOffset, focal_length)
+    m_per_unit = float(d.get("metersPerSceneUnit", 1.0))
+    return (w, h), (fx, fy, cx, cy), V, m_per_unit, d
+
+def parse_intrinsics_from_projection(P, w, h, cameraAperture, cameraApertureOffset, focal_length):
+    fx = P[0, 0] * w/2
+    fy = P[1, 1] * h/2
+    cx = w/2
+    cy = h/2
+    return fx, fy, cx, cy
+
+
+def clean_new_scenes():
     """Cleans up temporary directorys used by containers and generates complete dateset
     """
+    shutil.rmtree("dataset")
+    os.makedirs("dataset", exist_ok=False)
     index = 0
     for batch in os.listdir("temp"):
         for scene in os.listdir(os.path.join("temp", batch)):
@@ -123,12 +218,6 @@ def clean_dataset():
 
             #computes numbers in format output by Isaac-Sim replicator
             num_frames = len(os.listdir(scene_path)) // 5
-            numbers = []
-            for _ in range(num_frames):
-                number = "{}".format(_)
-                while len(number) < 4:
-                    number = "0" + number
-                numbers.append(number)
             
             #setting up dataset directory
             os.makedirs(path, exist_ok=False)
@@ -138,17 +227,18 @@ def clean_dataset():
             move(yaml_path, os.path.join(path, "scene.yaml"))
 
             #scene-wise moving of output
-            for _index, number in enumerate(numbers):
+            for _index in range(num_frames):
+                number = f"{_index:04d}"
                 frame_path = os.path.join(path, f"frame_{_index}")
                 os.makedirs(frame_path, exist_ok=True)
 
                 cam_params = "camera_params_{}.json".format(number)
-                depth =  "distance_to_camera_{}.npy".format(number)
+                depth =  "distance_to_image_plane_{}.npy".format(number)
                 rgb = "rgb_{}.png".format(number)
                 mask = "semantic_segmentation_{}.png".format(number)
                 mask_label = "semantic_segmentation_labels_{}.json".format(number)
 
-                move(os.path.join(scene_path, cam_params), os.path.join(frame_path, cam_params))
+                mod_params(os.path.join(scene_path, cam_params), os.path.join(frame_path, cam_params))
                 move(os.path.join(scene_path, rgb), os.path.join(frame_path, rgb))
                 move(os.path.join(scene_path, mask), os.path.join(frame_path, mask))
                 move(os.path.join(scene_path, mask_label), os.path.join(frame_path, mask_label))
@@ -161,11 +251,9 @@ def clean_dataset():
                 depth = np.array(depth_image, dtype=np.uint16)
                 depth = Image.fromarray(depth)
                 depth.save(os.path.join(frame_path, "depth.png"))
-
-                #comp_depth = (65535*(depth_image - depth_image.min())/np.ptp(depth_image)).astype(np.uint16)
-                #imageio.imwrite(os.path.join(frame_path, "depth.png"), comp_depth)  
             
             index += 1
+
 
     print("==========================")
     print("finished dataset generation, cleaning up...")
@@ -178,17 +266,119 @@ def clean_dataset():
     for file in glob.glob("out/yaml/*"):
         shutil.rmtree(file)
 
-def start_container(gpu: int, id: int, num_scenes: int, asset_path: str):
+def add_frames_to_dataset(mode, dataset, num_views):
+    if mode == "add_images":
+        for scene in os.listdir("temp"):
+            path = os.path.join(dataset, scene)
+            scene_path = os.path.join("temp", scene)
+            max_frame = (max([int(item.split("_")[-1]) for item in os.listdir(path) if fnmatch.fnmatch(item, "*_*")]))
+            frame_index = max_frame + 1
+            end_numbers = []
+            temp_numbers = []
+            for _ in range(max_frame + 1, max_frame + num_views + 1):
+                end_number = "{}".format(_)
+                temp_number = "{}".format(_ - (max_frame + 1))
+                end_number = f"{end_number:04d}"
+                temp_number = f"{temp_number:04d}"
+                end_numbers.append(end_number)
+                temp_numbers.append(temp_number)
+        
+            for end_number, temp_number in zip(end_numbers, temp_numbers):
+                cam_params = "camera_params_{}.json"
+                depth =  "distance_to_image_plane_{}.npy"
+                rgb = "rgb_{}.png"
+                mask = "semantic_segmentation_{}.png"
+                mask_label = "semantic_segmentation_labels_{}.json"
+
+                frame_path = os.path.join(path, f"frame_{frame_index}")
+                os.makedirs(frame_path)
+
+                mod_params(os.path.join(scene_path, cam_params.format(temp_number)), os.path.join(frame_path, cam_params.format(end_number)))
+                move(os.path.join(scene_path, rgb.format(temp_number)), os.path.join(frame_path, rgb.format(end_number)))
+                move(os.path.join(scene_path, mask.format(temp_number)), os.path.join(frame_path, mask.format(end_number)))
+                move(os.path.join(scene_path, mask_label.format(temp_number)), os.path.join(frame_path, mask_label.format(end_number)))
+
+                depth_image = np.load(os.path.join(scene_path, depth.format(temp_number)))
+                depth_image[depth_image< 0] = 0
+                depth_image[depth_image > 65000/5000] = 0
+                depth_image = depth_image*5000
+
+                depth = np.array(depth_image, dtype=np.uint16)
+                depth = Image.fromarray(depth)
+                depth.save(os.path.join(frame_path, "depth.png"))
+                frame_index += 1
+    
+def replace_images():
+    """Cleans up temporary directorys used by containers and generates complete dateset
+    """
+    index = 0
+    for scene in os.listdir("temp"):
+        scene_path = os.path.join("temp", scene)
+        path = os.path.join("dataset", "scene_{}".format(index))
+        
+
+        #computes numbers in format output by Isaac-Sim replicator
+        num_frames = len(os.listdir(scene_path)) // 5
+
+        #setting up dataset directory
+        os.makedirs(path, exist_ok=True)
+        scene_index = scene.split("_")[0]
+
+        #scene-wise moving of output
+        for _index in range(num_frames):
+            number = f"{_index:04d}"
+            frame_path = os.path.join(path, f"frame_{_index}")
+            os.makedirs(frame_path, exist_ok=True)
+
+            cam_params = "camera_params_{}.json".format(number)
+            depth =  "distance_to_image_plane_{}.npy".format(number)
+            rgb = "rgb_{}.png".format(number)
+            mask = "semantic_segmentation_{}.png".format(number)
+            mask_label = "semantic_segmentation_labels_{}.json".format(number)
+
+            mod_params(os.path.join(scene_path, cam_params), os.path.join(frame_path, cam_params))
+            move(os.path.join(scene_path, rgb), os.path.join(frame_path, rgb))
+            move(os.path.join(scene_path, mask), os.path.join(frame_path, mask))
+            move(os.path.join(scene_path, mask_label), os.path.join(frame_path, mask_label))
+
+            depth_image = np.load(os.path.join(scene_path, depth))
+            depth_image[depth_image< 0] = 0
+            depth_image[depth_image > 65000/5000] = 0
+            depth_image = depth_image*5000
+
+            depth = np.array(depth_image, dtype=np.uint16)
+            depth = Image.fromarray(depth)
+            depth.save(os.path.join(frame_path, "depth.png"))
+        
+        index += 1
+
+
+
+def start_scene_sampler(gpu: int, id: int, num_scenes: int, asset_path: str):
     """starts Isaac-Sim container with defined config
 
     Args:
         gpu (int): Index of GPU to run container on
-        id (int): Runtime-ID of container
+        id (int): Runtime-ID of container for mutex
         num_scenes (int): number of scenes to be generated
         asset_path (str): directory of assets for scene generation
     """
     os.system(f"echo 'Starting Isaac-Sim container: id {id}'")
-    os.system(f"./isaac-sim.docker.sh {gpu} {id} {num_scenes} {asset_path}")
+    os.system(f"./isaac-sim.docker.sh {gpu} {id} {num_scenes} {asset_path} {256}")
+
+def start_scene_mod(gpu: int, num_views: int, asset_path: str, dataset: str, mode: str, id: int):
+    """Addes frames to existing datasets created with scene_sampler
+
+    Args:
+        gpu (int): Index of GPU to run container on
+        num_views (int): number of views to add to dataset
+        asset_path (str): directory of assets for scene loading 
+        dataset (str): root directory of dataset to be modfified
+        mode (str): identifier weather to add or replace images in the dataset
+        id (int): Runtime-ID of container for mutex
+    """
+    os.system(f"echo 'Starting Isaac-sim container")
+    os.system(f"./isaac-sim.docker_add_images.sh {gpu} {num_views} {asset_path} {dataset} {mode} {id} {0}")
 
 def print_gpus():
     """prints available GPUs

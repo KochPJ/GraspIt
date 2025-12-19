@@ -3,10 +3,12 @@
 set -e
 
 gpu_index=$1
-container_index=$2
-num_scenes=$3
-asset_path=$4
-num_views=$5
+num_views=$2
+asset_path=$3
+dataset_path=$4
+mode=$5
+container_index=$6
+num_scenes=$7
 
 echo "Setting variables..."
 # Set to desired Nucleus
@@ -47,8 +49,8 @@ docker run --gpus device=$gpu_index  -e "ACCEPT_EULA=${accept_eula}" --rm --netw
     -e "PRIVACY_CONSENT=${privacy_consent}" -e "PRIVACY_USERID=${privacy_userid}" \
 	-e CONTAINER_INDEX=$container_index \
 	-e NUM_SCENES=$num_scenes \
+	-e MODE=$mode \
 	-e NUM_VIEWS=$num_views \
-	-e MODE=random \
     -v ~/docker/isaac-sim/kit/cache/Kit:/isaac-sim/kit/cache:rw \
 	-v ~/docker/isaac-sim/cache/ov:/root/.cache/ov:rw \
 	-v ~/docker/isaac-sim/cache/pip:/root/.cache/pip:rw \
@@ -59,8 +61,8 @@ docker run --gpus device=$gpu_index  -e "ACCEPT_EULA=${accept_eula}" --rm --netw
 	-v ~/docker/isaac-sim/data:/root/.local/share/ov/data:rw \
 	-v ~/docker/isaac-sim/documents:/root/Documents:rw \
 	-v ~/OptiSim/scene_sampler:/omniverse:rw \
+    -v $dataset_path:/dataset:rw \
 	-v $asset_path:/share:rw \
 	scene_gen:latest
 
 echo "Isaac Sim container run completed!"
-
