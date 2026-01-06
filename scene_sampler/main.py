@@ -162,7 +162,7 @@ def add_frames():
     if mode == "add_images":
         add_frames_to_dataset(mode, dataset, num_views)
     else:
-        replace_images()
+        replace_images(dataset)
 
 def mod_params(cam_path, final_path):
     (w, h), (fx, fy, cx, cy), V_wc, meters_per_unit, cam_params = load_cam(cam_path)
@@ -207,13 +207,13 @@ def parse_intrinsics_from_projection(P, w, h, cameraAperture, cameraApertureOffs
 def clean_new_scenes():
     """Cleans up temporary directorys used by containers and generates complete dateset
     """
-    shutil.rmtree("/dataset")
-    os.makedirs("/dataset", exist_ok=False)
+    shutil.rmtree("dataset")
+    os.makedirs("dataset", exist_ok=False)
     index = 0
     for batch in os.listdir("temp"):
         for scene in os.listdir(os.path.join("temp", batch)):
             scene_path = os.path.join("temp", batch, scene)
-            path = os.path.join("/dataset", "scene_{}".format(index))
+            path = os.path.join("dataset", "scene_{}".format(index))
             
 
             #computes numbers in format output by Isaac-Sim replicator
@@ -308,20 +308,19 @@ def add_frames_to_dataset(mode, dataset, num_views):
                 depth.save(os.path.join(frame_path, "depth.png"))
                 frame_index += 1
     
-def replace_images():
+def replace_images(dataset):
     """Cleans up temporary directorys used by containers and generates complete dateset
     """
-    index = 0
+    print("replacing images for {}".format(dataset))
     for scene in os.listdir("temp"):
         scene_path = os.path.join("temp", scene)
-        path = os.path.join("/dataset", "scene_{}".format(index))
+        path = os.path.join(dataset, scene)
         
 
         #computes numbers in format output by Isaac-Sim replicator
         num_frames = len(os.listdir(scene_path)) // 5
 
         #setting up dataset directory
-        os.makedirs(path, exist_ok=True)
         scene_index = scene.split("_")[0]
 
         #scene-wise moving of output
@@ -349,8 +348,6 @@ def replace_images():
             depth = np.array(depth_image, dtype=np.uint16)
             depth = Image.fromarray(depth)
             depth.save(os.path.join(frame_path, "depth.png"))
-        
-        index += 1
 
 
 
@@ -408,7 +405,7 @@ def query_gpu(threshold: float, used_gpus: int) -> int:
         util = pynvml.nvmlDeviceGetUtilizationRates(handle)
         mem = pynvml.nvmlDeviceGetMemoryInfo(handle)
         print(util.gpu, util.memory)
-        if util.gpu < threshold and util.memory < threshold and index not in used_gpus:
+        if util.memory < threshold and index not in used_gpus:
             return index
     return False
 
