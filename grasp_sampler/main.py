@@ -3,7 +3,16 @@ from scene import Scene
 from utlis import print_options, load_yaml, get_scene_paths
 
 import argparse
+import multiprocessing as mp
+from tqdm import tqdm
+import os
+import contextlib
+import signal
 
+
+def hard_exit(sig, frame):
+    print("\nSIGINT erhalten, kill komplette Prozessgruppe ...", flush=True)
+    os.killpg(os.getpgrp(), signal.SIGKILL)
 
 def options():
     parser = argparse.ArgumentParser()
@@ -61,6 +70,98 @@ def options():
     return arguments
 
 
+def process_scene(args_and_path):
+    """
+    """
+    args, path = args_and_path
+
+    scene_dir = os.path.dirname(path)
+    scene_name = os.path.basename(scene_dir)
+    log_path = os.path.join("logs", f"{scene_name}.log")
+
+    with open(log_path, "w", buffering=1) as log_file, \
+         contextlib.redirect_stdout(log_file), \
+         contextlib.redirect_stderr(log_file):
+
+        try:
+            dic = load_yaml(path)
+            if dic["table"]["name"] == "Dellwood_DiningTable":
+                print(f"Szenen-Log: Überspringe wegen Dellwood_DiningTable: {path}")
+                return ("skipped", path, log_path)
+
+            print(f"Szenen-Log: Starte Sampling für {path}")
+            scene = Scene.from_dict(dic)
+            # scene.show()
+
+            sampler = GraspSampler(args, scene, scene_path_yml=path)
+            sampler.sample()
+
+            print(f"Szenen-Log: Erfolgreich fertig für {path}")
+            status = ("done", path, log_path)
+
+        except Exception as e:
+            # Stacktrace etc. geht in die Logdatei
+            print(f"Szenen-Log: FEHLER bei {path}: {repr(e)}")
+            status = ("error", path, log_path, repr(e))
+        finally:
+            try:
+                del scene
+            except NameError:
+                pass
+            try:
+                del sampler
+            except NameError:
+                pass
+
+    return status
+
+
+if __name__ == '__main__':
+    # eigene Prozessgruppe für dieses Script + alle seine Kinder
+    os.setpgrp()
+    signal.signal(signal.SIGINT, hard_exit)
+
+    args = options()
+    print_options(args)
+
+    scene_paths = get_scene_paths(args.scenes_path_yml, args.indices)
+    n_scenes = len(scene_paths)
+    print(f"{n_scenes} Scenes")
+
+    if not scene_paths:
+        raise RuntimeError("Keine Szenen gefunden.")
+
+    num_workers = mp.cpu_count()
+    num_workers = 20
+    num_workers = min(num_workers, n_scenes)
+    print(f"Starte mit {num_workers} Prozessen für {n_scenes} Szenen.")
+
+    work_items = [(args, path) for path in scene_paths]
+
+    pool = mp.Pool(processes=num_workers)
+
+    for res in tqdm(
+        pool.imap_unordered(process_scene, work_items, chunksize=1),
+        total=len(work_items),
+        desc="Sampling scenes"
+    ):
+        status = res[0]
+        path = res[1]
+        log_path = res[2]
+        scene_dir = os.path.dirname(path)
+        scene_name = os.path.basename(scene_dir)
+
+        if status == "done":
+            print(f"[OK]    {scene_name} ({path}) -> Log: {log_path}")
+        elif status == "skipped":
+            print(f"[SKIP]  {scene_name} ({path}) -> Log: {log_path}")
+        elif status == "error":
+            err = res[3]
+            print(f"[ERROR] {scene_name} ({path}) -> Log: {log_path}")
+            print(f"        Fehler: {err}")
+
+
+'''
 if __name__ == '__main__':
     args = options()
     print_options(args)
@@ -82,3 +183,4 @@ if __name__ == '__main__':
         sampler = GraspSampler(args, scene, scene_path_yml=path)
         sampler.sample()
         del scene
+'''
