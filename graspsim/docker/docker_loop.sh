@@ -43,12 +43,12 @@ graspsim_path="/home/karaadem/git/OptiSim/graspsim"
 scene_path="/mnt/4TBSSD/synthetic_data/share"
 
 # Docker- und Skript-Konfiguration
-CONTAINER_NAME="graspsim_container1"
+CONTAINER_NAME="graspsim_container2"
 IMAGE_NAME="graspsim"
 WORKDIR="/graspsim"  # Arbeitsverzeichnis im Container
 PYTHON_EXEC="omni_python"  # Python-Interpreter oder Wrapper
 PYTHON_SCRIPT="graspsim.py"  # Python-Skript
-PYTHON_PARAMS='-i "0-50" -r robot_configs/config.toml'  # Parameter für das Python-Skript
+PYTHON_PARAMS='-i "25-50" -r robot_configs/config.toml'  # Parameter für das Python-Skript
 RETRY_LIMIT=10  # Maximale Anzahl von Neustart-Versuchen
 RETRY_COUNT=0  # Aktueller Zähler von Neustart-Versuchen
 
@@ -56,7 +56,7 @@ RETRY_COUNT=0  # Aktueller Zähler von Neustart-Versuchen
 start_container() {
     echo "Starte Docker-Container mit X11-Forwarding im Hintergrund..."
     xhost +
-    docker run --name "${CONTAINER_NAME}" --entrypoint /bin/sh -d --gpus "device=0" -e "ACCEPT_EULA=${accept_eula}" --rm --network=host \
+    docker run --name "${CONTAINER_NAME}" --entrypoint /bin/sh -d --gpus "device=1" -e "ACCEPT_EULA=${accept_eula}" --rm --network=host \
         -v $HOME/.Xauthority:/root/.Xauthority \
         -e DISPLAY \
         -e "OMNI_USER=${omni_user}" -e "OMNI_PASS=${omni_password}" \
