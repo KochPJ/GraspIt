@@ -24,14 +24,11 @@ Description of available parameters:
 
 An example of changing the parameters:
 ```
-python3 main.py -np 20000 -mg 5000 -f 0.35 -s path/to/scenes/ -i "0-9" --visualize_single
+python3 main.py -np 20000 -mg 5000 -f 0.35 -s path/to/scenes/ -i "0-9" --visualize_single -nw 10
 ```
 
 ## Parameter Tuning Tips
 
 1. **Number of points (`num_points`)**: Higher values yield a denser point cloud and more accurate results, but increase runtime.
 2. **`max_grasps`** and **`max_rotations`**: Adjust to control the variety and number of generated grasps.
-3. **`friction`**: Change the coefficient to simulate different physical scenarios.
-
-
-
+3. **`friction`**: 
