@@ -17,7 +17,6 @@ class GraspSampler(object):
         """
 
         self.scene = scene
-        self.n_scenes = 1
         self.n_objects = scene.__len__()
         
         self.gripper = Gripper(custom=False)
@@ -42,17 +41,6 @@ class GraspSampler(object):
             raise Exception("num_points must be greater than or equal to num_grasps.")
 
     def sample(self):
-        """with multiprocessing
-        """
-
-        if self.n_scenes > 1:
-            raise NotImplementedError("")
-        else:
-            self.sample_single()
-
-        return
-  
-    def sample_single(self):
         """
         """
 

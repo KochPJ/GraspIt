@@ -41,15 +41,26 @@ def options():
                         default=0.4,
                         help="Set the friction coefficient.")
     
-    parser.add_argument("-vs",
-                        "--visualize_single",
-                        action="store_true",
-                        help="Set to true if we want to visualize a single result.")
-    
-    parser.add_argument("-va",
-                        "--visualize_all",
-                        action="store_true",
-                        help="Set to true if we want to visualize all results.")
+    parser.add_argument(
+        "--visualize_single",
+        action="store_true",
+        help=(
+            "Set to true if we want to visualize a single result. "
+            "Recommended only when processing a single scene; "
+            "using this with multiple processes may open many windows."
+        ),
+    )
+
+    parser.add_argument(
+        "-va",
+        "--visualize_all",
+        action="store_true",
+        help=(
+            "Set to true if we want to visualize all results. "
+            "Recommended only when processing a single scene; "
+            "using this with multiple processes may open many windows."
+        ),
+    )
     
     parser.add_argument("-s",
                         "--scenes_path_yml",
@@ -65,14 +76,15 @@ def options():
                         help="Index range of scenes, e.g. '0-5' for a range or '1,3,5' for specific indices."
     )
 
-    parser.add_argument(
-                        "-show",
-                        "--show",
-                        default=False,
-                        type=bool,
-                        help="Index range of scenes, e.g. '0-5' for a range or '1,3,5' for specific indices."
-    )
 
+    parser.add_argument(
+        "-nw",
+        "--num_workers",
+        type=int,
+        default=os.cpu_count(),
+        help="Number of worker processes (default: number of CPU cores)",
+    )
+    
     arguments = parser.parse_args()
     
     return arguments
@@ -139,8 +151,7 @@ if __name__ == '__main__':
     if not scene_paths:
         raise RuntimeError("Keine Szenen gefunden.")
 
-    num_workers = mp.cpu_count()
-    num_workers = 20
+    num_workers = args.num_workers
     num_workers = min(num_workers, n_scenes)
     print(f"Starte mit {num_workers} Prozessen für {n_scenes} Szenen.")
 
