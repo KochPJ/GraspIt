@@ -1,4 +1,7 @@
 omniverse/
 daaset/
-__pychache__
+*__pycache__
+*/__pycache__
+*/*/__pycache__
+*/*/scenes
 get_docker.sh

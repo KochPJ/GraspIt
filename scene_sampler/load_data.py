@@ -49,7 +49,7 @@ class DataIterator:
 
 
 if __name__ == "__main__":
-    dataset = Data("dataset")
+    dataset = Data("/dataset")
     while True:
         try:
             scene = next(dataset)

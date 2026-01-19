@@ -243,7 +243,7 @@ class Viewer(object):
 
         scene_dict["table"] = {}
         scene_dict["table"]["name"] = scene_table_name
-        scene_dict["table"]["file_path"] = f"/share/assets/{scene_table_name}/{scene_table_name}.usd"
+        scene_dict["table"]["file_path"] = f"/share/assets/{scene_table_name}/{scene_table_name}.obj"
         scene_dict["table"]["position"] = np.array([0.0, 0.0, 0.0]).tolist()
         scene_dict["table"]["orientation"] = np.array([0.0, 0.0, 0.0, 0.0]).tolist()
         scene_dict["table"]["scale"] = np.array([0.01, 0.01, 0.01]).tolist()

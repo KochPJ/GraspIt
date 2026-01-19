@@ -39,8 +39,8 @@ if ! [[ -z "${PRIVACY_USERID}" ]]; then
 fi
 
 # Weitere Pfade
-graspsim_path="/home/karaadem/git/OptiSim/graspsim"
-scene_path="/mnt/4TBSSD/synthetic_data/share"
+graspsim_path="/home/kochpaul/git/OptiSim/graspsim"
+scene_path="/mnt/kikerp/OptiSim"
 
 # Docker- und Skript-Konfiguration
 CONTAINER_NAME="graspsim_container2"
