@@ -4,6 +4,22 @@
 
 ## Installation
 
+````
+git pull https://github.com/sersandre/OptiSim.git
+
+cd grasp_sampler
+
+### create and activate a dedicated conda environment (Python 3.11 only)
+
+conda create -n <myenv> python=3.11
+conda activate <myenv>
+
+### install Python dependencies
+
+pip install -r requirements.txt
+````
+
+
 ## Usage
 
 ## Parameters

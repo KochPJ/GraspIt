@@ -111,7 +111,7 @@ def process_scene(args_and_path):
 
             print(f"Szenen-Log: Starte Sampling für {path}")
             scene = Scene.from_dict(dic)
-            # scene.show()
+            scene.show()
 
             sampler = GraspSampler(args, scene, scene_path_yml=path)
             sampler.sample()

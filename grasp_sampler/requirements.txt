@@ -1,3 +1,7 @@
+# Requires Python 3.11
+
+# This project was only tested with Python 3.11
+
 aspose_3d==25.5.0
 h5py==3.14.0
 numpy==2.3.2
@@ -9,3 +13,4 @@ usd_core==25.5.1
 pyglet==1.5.29
 python-fcl==0.7.0.10
 rtree==1.4.1
+tqdm==4.67.1
