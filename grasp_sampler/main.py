@@ -8,6 +8,7 @@ from tqdm import tqdm
 import os
 import contextlib
 import signal
+import traceback
 
 
 def hard_exit(sig, frame):
@@ -119,10 +120,19 @@ def process_scene(args_and_path):
             print(f"Szenen-Log: Erfolgreich fertig für {path}")
             status = ("done", path, log_path)
 
+            '''
+            except Exception as e:
+                # Stacktrace etc. geht in die Logdatei
+                print(f"Szenen-Log: FEHLER bei {path}: {repr(e)}")
+                status = ("error", path, log_path, repr(e))
+            '''
+        
         except Exception as e:
-            # Stacktrace etc. geht in die Logdatei
             print(f"Szenen-Log: FEHLER bei {path}: {repr(e)}")
+            # Stacktrace (inklusive Datei/Zeile) ausgeben:
+            traceback.print_exc()
             status = ("error", path, log_path, repr(e))
+            
         finally:
             try:
                 del scene
