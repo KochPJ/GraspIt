@@ -112,7 +112,7 @@ def mod_scenes(scene_path, scene_index):
 
     print(get_assets_root_path())
 
-    with open(os.path.join("dataset", f"scene_{scene_index}", "scene.yaml")) as f:
+    with open(os.path.join("/dataset", f"scene_{scene_index}", "scene.yaml")) as f:
         data_dict = safe_load(f)
     
     scene = Scene.from_dataset(data_dict, root_path)
@@ -415,8 +415,8 @@ if __name__ == "__main__":
         os.makedirs("out/scenes", exist_ok=True)
         os.makedirs("temp", exist_ok=True)
         try:
-            for scene in os.listdir("dataset"):
-                scene_path = os.path.join("dataset", scene)
+            for scene in os.listdir("/dataset"):
+                scene_path = os.path.join("/dataset", scene)
                 print(scene_path)
                 scene_index = scene.split("_")[-1]
                 out_scene_path = os.path.join("out", "scenes", f"scene_{scene_index}.usd")
@@ -447,7 +447,7 @@ if __name__ == "__main__":
         scene_path = f"out/scenes/{container_index}_scenes"
         yaml_path = f"out/yaml/{container_index}_yaml"
         temp_path = f"temp/{container_index}_temp"
-        data_path = f"dataset"
+        data_path = f"/dataset"
         os.makedirs(scene_path, exist_ok=True)
         os.makedirs(yaml_path, exist_ok=True)
         os.makedirs(temp_path, exist_ok=True)

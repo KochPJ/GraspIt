@@ -5,7 +5,7 @@ COUNT = 0
 def parse_args():
     parser = argparse.ArgumentParser(description="A NVIDIA Ominverse implementation to simulate random tabletops")
 
-    parser.add_argument("--dataset", default="dataset")
+    parser.add_argument("--dataset", default="/dataset")
     parser.add_argument("--num_views", default=0)
     parser.add_argument("--container_index", default=0)
     parser.add_argument("--use_poses", action="store_true")

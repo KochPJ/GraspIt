@@ -63,7 +63,7 @@ def clean_new_scenes():
                 scene_path = os.path.join("temp", scene)
                 index = scene.split("_")[-1]
                 print(f"cleaning scene: {scene_path}")
-                path = os.path.join("dataset", "scene_{}".format(index))
+                path = os.path.join("/dataset", "scene_{}".format(index))
                 
 
                 #computes numbers in format output by Isaac-Sim replicator
@@ -106,7 +106,7 @@ def clean_new_scenes():
             for scene in os.listdir(os.path.join("temp", batch)):
                 scene_path = os.path.join("temp", batch, scene)
                 print(f"cleaning scene: {scene_path}")
-                path = os.path.join("dataset", "scene_{}".format(index))
+                path = os.path.join("/dataset", "scene_{}".format(index))
                 
 
                 #computes numbers in format output by Isaac-Sim replicator
@@ -164,7 +164,7 @@ def clean_new_scenes():
     #    shutil.rmtree(file)
     
 def add_grasps_to_scenes():
-    for scene in os.listdir("dataset"):
+    for scene in os.listdir("/dataset"):
         print(scene)
 
 def merge_dataset(source, target):

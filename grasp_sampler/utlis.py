@@ -117,7 +117,10 @@ def get_scene_paths(base_directory: str, indices: str = "") -> list:
         for root, dirs, files in os.walk(base_directory)
         if 'scene.yaml' in files
     ]
-    scene_paths = sorted(scene_paths, key=lambda x: int(x.split('/')[3].split('_')[1]))
+    scene_paths = sorted(
+        scene_paths,
+        key=lambda x: int(os.path.basename(os.path.dirname(x)).split('_')[-1])
+    )
 
     if indices:
         # Range (e.g. 1-5)

@@ -1,0 +1,54 @@
+Szenen-Log: Starte Sampling für /share/scenes_13/scene_0/scene.yaml
+object0
+object1
+object10
+object11
+object12
+object13
+object14
+object15
+object2
+object3
+object4
+object5
+object6
+object7
+object8
+object9
+/share/assets/Midtown/Midtown.obj
+0.36173900000000003
+125
+223
+0
+0
+56
+7
+111
+292
+3
+0
+0
+0
+0
+0
+212
+476
+1505 grasps were sampled in 6224.952 s.
+(125, 2, 4, 4)
+(223, 2, 4, 4)
+(0, 2, 4, 4)
+(0, 2, 4, 4)
+(56, 2, 4, 4)
+(7, 2, 4, 4)
+(111, 2, 4, 4)
+(292, 2, 4, 4)
+(3, 2, 4, 4)
+(0, 2, 4, 4)
+(0, 2, 4, 4)
+(0, 2, 4, 4)
+(0, 2, 4, 4)
+(0, 2, 4, 4)
+(212, 2, 4, 4)
+(476, 2, 4, 4)
+Dataset was saved successfully.
+Szenen-Log: Erfolgreich fertig für /share/scenes_13/scene_0/scene.yaml

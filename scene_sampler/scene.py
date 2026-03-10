@@ -45,10 +45,10 @@ class Scene():
 
         # table_usd = get_table_usd()
 
-        root = "omniverse://localhost/Assets/tables_usd/"
+        root = "/share/assets/"
         _table = np.random.choice(tables)
 
-        table_usd = root + _table
+        table_usd = root + _table.rstrip(".usd") + "/" +_table
         _ = create_prim(prim_path=work_path + "/" + "table", usd_path=table_usd, scale=[0.01])
 
         keys = np.array(list(data_dict.keys()))

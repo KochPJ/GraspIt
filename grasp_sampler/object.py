@@ -16,37 +16,22 @@ class Object(object):
                  ):
         self.name = name
         
-        #if not file_path.startswith('/'):
-        #    file_path = '/' + file_path
-        #    print(file_path)
-
-        if not file_path.endswith('.obj'):
-            if '.' not in file_path:
-                file_path = file_path+'.obj'
-            else:
-                file_path = file_path.split('.')
-                file_path[-1] = 'obj'
-                file_path = '.'.join(file_path)
+        root, ext = os.path.splitext(file_path)
+        
+        file_path = root + '.obj'
 
         try:
             self.mesh = trimesh.load(file_path)
             print(file_path)
         except:
-            root, ext = os.path.splitext(file_path)
-            if ext in [".usd"]:
-                '''
-                output_obj = root + ".obj"
-                print(file_path)
-                print(output_obj)
-                usd2obj(file_path, output_obj)
-                self.mesh = trimesh.load(output_obj)
-                '''
-                self.mesh = usd2trimesh(file_path)
-                
-            else:
-                
-                raise NameError(f"No usd file, {file_path}.")
 
+            file_path = root + ".usd"
+            output_obj = root + ".obj"
+            usd2obj(file_path, output_obj)
+            self.mesh = trimesh.load(output_obj)
+            
+            # self.mesh = usd2trimesh(file_path)
+                
         if scale is not None:
             self.rescale(scale)
 
