@@ -1,5 +1,5 @@
 ## GraspIT 
-![GraspIT](graspit.png=250x250)
+![GraspIT](graspit.png)
 
 ## Papers
 1. GraspIT: A Dataset Bridging the Sim-to-Real gap and back for Validated Grasping SE(3) Pose Generation
