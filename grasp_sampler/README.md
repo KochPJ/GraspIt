@@ -6,7 +6,7 @@ Antipodal grasp sampling for tabletop scenes with parallel processing support.
 
 The grasp sampler generates collision-free antipodal grasp poses for objects placed on a table surface. It uses surface point sampling, ray-based contact point detection, and friction cone validation to produce physically plausible two-finger grasps.
 
-<img src="images/scene.png" title="Scene" width="500"/>
+<img src="images/scene_grasps.png" title="Scene" width="500"/>
 
 ### Key Features
 
