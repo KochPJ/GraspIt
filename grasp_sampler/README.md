@@ -84,18 +84,19 @@ table:
   position: [0.0, 0.0, 0.0]
   orientation: [1.0, 0.0, 0.0, 0.0]  # quaternion (w, x, y, z)
 
-objects:
+object0:
   - name: "mug"
     file_path: "path/to/mug_mesh"
     position: [0.1, 0.2, 0.75]
     orientation: [1.0, 0.0, 0.0, 0.0]
     scale: [0.001, 0.001, 0.001]
-
+object1:
   - name: "bowl"
     file_path: "path/to/bowl_mesh"
     position: [-0.1, 0.15, 0.75]
     orientation: [0.7071, 0.0, 0.0, 0.7071]
     scale: [0.001, 0.001, 0.001]
+...
 ```
 
 | Field         | Description                                              |
